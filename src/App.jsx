@@ -55,10 +55,26 @@ function buildMockupPrompt(scene, productName, productColor, productDetails) {
 // ════════════════════════════════════════════════════════════
 
 const BANNER_PRESETS = [
-  { id: "sale", label: "🔥 Sale/Discount", hookText: "VETERAN-OWNED & PROUD", headlineText: "UP TO 50% OFF", subText: "LIMITED TIME OFFER — HONOR THE SERVICE", offerLabel: "BEST SELLER", ctaText: "SHOP NOW — FREE SHIPPING", ctaColor: "bright red", badgeText: "VETERAN OWNED", badgeIcon: "★", bgColor: "deep navy blue", bgPattern: "subtle diagonal stripes", overallStyle: "bold patriotic commercial" },
-  { id: "new_product", label: "✨ New Arrival", hookText: "JUST DROPPED", headlineText: "NEW COLLECTION 2026", subText: "DESIGNED FOR THOSE WHO SERVED", offerLabel: "NEW", ctaText: "EXPLORE THE COLLECTION", ctaColor: "military green", badgeText: "MADE IN USA", badgeIcon: "🇺🇸", bgColor: "charcoal black", bgPattern: "subtle geometric grid", overallStyle: "modern premium military" },
-  { id: "holiday", label: "🎖️ Veterans Day", hookText: "THANK YOU FOR YOUR SERVICE", headlineText: "VETERANS DAY SALE", subText: "HONORING ALL WHO SERVED — 25% OFF SITEWIDE", offerLabel: "SPECIAL EDITION", ctaText: "HONOR & SAVE TODAY", ctaColor: "deep red with gold border", badgeText: "PROUDLY AMERICAN", badgeIcon: "🎖️", bgColor: "dark red and navy gradient", bgPattern: "faded American flag texture", overallStyle: "patriotic emotional premium" },
-  { id: "social", label: "📱 Social Media", hookText: "AS SEEN ON INSTAGRAM", headlineText: "WEAR YOUR PRIDE", subText: "JOIN 50,000+ VETERANS WHO TRUST VETTAILOR", offerLabel: "TRENDING", ctaText: "GET YOURS NOW", ctaColor: "bright blue", badgeText: "⭐⭐⭐⭐⭐ 4.9 RATED", badgeIcon: "⭐", bgColor: "dark slate", bgPattern: "subtle noise texture", overallStyle: "social media optimized, eye-catching" },
+  { id: "sale", label: "🔥 Sale/Discount",
+    bgColor: "deep navy blue", bgPattern: "subtle diagonal stripes", patternDetail: "thin white lines at 45 degrees", textureStyle: "smooth matte finish", bgMood: "bold and urgent",
+    leftWidth: "45%", modelMood: "confident and proud", modelAge: "45", modelGender: "male", modelFeatures: "strong athletic build, short cropped hair, square jaw", productFullDesc: "", lightingStyle: "warm golden hour side lighting", separationTechnique: "soft edge blend into background", modelBrightness: "natural brightness", modelBg: "subtle dark gradient behind model",
+    rightWidth: "55%", hookText: "LIMITED TIME OFFER", hookBgStyle: "semi-transparent dark strip", headlineText: "UP TO 50% OFF", subText: "HONOR THE SERVICE — SHOP TODAY", offerLabel: "BEST SELLER", productDisplay: "front-facing product shot", ctaColor: "bright red", ctaText: "SHOP NOW — FREE SHIPPING", badgeType: "military", badgeIcon: "★", badgeText: "TRUSTED BY 50,000+ CUSTOMERS", badgeColor: "gold on dark",
+    footerLeft: "", footerRight: "", overallStyle: "bold patriotic commercial" },
+  { id: "new_product", label: "✨ New Arrival",
+    bgColor: "charcoal black", bgPattern: "subtle geometric grid", patternDetail: "thin hexagonal outlines", textureStyle: "clean modern matte", bgMood: "sleek and premium",
+    leftWidth: "45%", modelMood: "confident", modelAge: "40", modelGender: "male", modelFeatures: "athletic build, neat beard, intense eyes", productFullDesc: "", lightingStyle: "cool studio rim lighting", separationTechnique: "sharp shadow cutoff", modelBrightness: "slightly elevated brightness", modelBg: "dark studio backdrop",
+    rightWidth: "55%", hookText: "JUST DROPPED", hookBgStyle: "accent color strip", headlineText: "NEW COLLECTION 2026", subText: "DESIGNED FOR THOSE WHO SERVED", offerLabel: "NEW", productDisplay: "angled product shot", ctaColor: "military green", ctaText: "EXPLORE THE COLLECTION", badgeType: "modern minimal", badgeIcon: "🇺🇸", badgeText: "MADE IN USA", badgeColor: "white on dark green",
+    footerLeft: "", footerRight: "", overallStyle: "modern premium military" },
+  { id: "holiday", label: "🎖️ Veterans Day",
+    bgColor: "dark red and navy gradient", bgPattern: "faded American flag texture", patternDetail: "low opacity stars and stripes overlay", textureStyle: "slightly worn vintage", bgMood: "patriotic and emotional",
+    leftWidth: "45%", modelMood: "proud and solemn", modelAge: "50", modelGender: "male", modelFeatures: "weathered face, broad shoulders, strong posture", productFullDesc: "", lightingStyle: "warm dramatic side light", separationTechnique: "soft vignette blend", modelBrightness: "warm golden tones", modelBg: "dark flag-themed gradient",
+    rightWidth: "55%", hookText: "THANK YOU FOR YOUR SERVICE", hookBgStyle: "gold accent line above text", headlineText: "VETERANS DAY SALE", subText: "HONORING ALL WHO SERVED — 25% OFF SITEWIDE", offerLabel: "SPECIAL EDITION", productDisplay: "hero product shot", ctaColor: "deep red with gold border", ctaText: "HONOR & SAVE TODAY", badgeType: "ribbon", badgeIcon: "🎖️", badgeText: "PROUDLY AMERICAN", badgeColor: "gold on navy",
+    footerLeft: "", footerRight: "", overallStyle: "patriotic emotional premium" },
+  { id: "social", label: "📱 Social Media",
+    bgColor: "dark slate", bgPattern: "subtle noise texture", patternDetail: "fine grain overlay", textureStyle: "modern digital clean", bgMood: "trendy and eye-catching",
+    leftWidth: "45%", modelMood: "energetic and approachable", modelAge: "35", modelGender: "male", modelFeatures: "fit build, casual confidence, warm smile", productFullDesc: "", lightingStyle: "bright natural daylight", separationTechnique: "color contrast separation", modelBrightness: "high key bright", modelBg: "complementary color wash",
+    rightWidth: "55%", hookText: "AS SEEN ON INSTAGRAM", hookBgStyle: "gradient accent bar", headlineText: "WEAR YOUR PRIDE", subText: "JOIN 50,000+ HAPPY CUSTOMERS", offerLabel: "TRENDING", productDisplay: "lifestyle product shot", ctaColor: "bright blue", ctaText: "GET YOURS NOW", badgeType: "star rating", badgeIcon: "⭐", badgeText: "⭐⭐⭐⭐⭐ 4.9 RATED", badgeColor: "yellow on dark",
+    footerLeft: "", footerRight: "", overallStyle: "social media optimized, eye-catching" },
 ];
 
 const BANNER_SIZES = [
@@ -69,8 +85,8 @@ const BANNER_SIZES = [
   { id: "1200x600", label: "1200×600 — Google Display" },
 ];
 
-function buildBannerPrompt(cfg) {
-  return `Marketing banner design, ${cfg.bannerSize}, landscape orientation. Full composition with all elements rendered completely. Background: ${cfg.bgColor} with ${cfg.bgPattern}, clean professional texture, ${cfg.overallStyle}. LEFT HALF (45% width): full-height lifestyle photo of confident ${cfg.modelAge || "45"} year old American veteran ${cfg.modelGender || "male"} with strong athletic build, wearing ${cfg.productName} in ${cfg.productColor}, warm golden hour lighting, soft edge blend into background, natural brightness, photorealistic, bleeds to left edge with no border or frame. RIGHT HALF (55% width): TOP — "${cfg.hookText}" in small bold white all-caps on semi-transparent dark strip. BELOW — "${cfg.headlineText}" in very large bold white condensed font, 2-3x larger than all other text. BELOW — "${cfg.subText}" in small white all-caps. CENTER — rounded product box with "${cfg.offerLabel}" pill above, showing the ${cfg.productName}. BELOW BOX — military badge with ${cfg.badgeIcon} and "${cfg.badgeText}" in gold on dark. BOTTOM — ${cfg.ctaColor} CTA full width: "${cfg.ctaText}", footer left: "VetTailor.com", footer right: "🇺🇸 Veteran-Owned Business", same line NOT stacked. Style: ${cfg.overallStyle}. All text must be clearly legible and correctly spelled.`;
+function buildBannerPrompt(c) {
+  return `Marketing banner design, ${c.bannerSize}, landscape orientation. Full composition with all elements rendered completely. Background: ${c.bgColor} with ${c.bgPattern}, ${c.patternDetail}, ${c.textureStyle}, ${c.bgMood}. LEFT HALF (${c.leftWidth} width): full-height lifestyle photo of ${c.modelMood} ${c.modelAge} year old American veteran ${c.modelGender} with ${c.modelFeatures}, wearing ${c.productFullDesc}, ${c.lightingStyle}, ${c.separationTechnique}, ${c.modelBrightness}, ${c.modelBg}, photorealistic, bleeds to left edge with no border or frame. RIGHT HALF (${c.rightWidth} width): TOP — "${c.hookText}" in small bold white all-caps on ${c.hookBgStyle}. BELOW — "${c.headlineText}" in very large bold white condensed font, 2-3x larger than all other text. BELOW — "${c.subText}" in small white all-caps. CENTER — rounded product box with "${c.offerLabel}" pill above, showing ${c.productDisplay} of ${c.productName}. BELOW BOX — ${c.badgeType} badge with ${c.badgeIcon} and "${c.badgeText}" in ${c.badgeColor}. BOTTOM — ${c.ctaColor} CTA full width: "${c.ctaText}"${c.footerLeft ? `, footer left: "${c.footerLeft}"` : ""}${c.footerRight ? `, footer right: "${c.footerRight}"` : ""}${c.footerLeft || c.footerRight ? ", same line NOT stacked" : ""}. Style: ${c.overallStyle}. All text must be clearly legible and correctly spelled.`;
 }
 
 // ════════════════════════════════════════════════════════════
@@ -156,7 +172,9 @@ export default function App() {
   const [bannerMode, setBannerMode] = useState(false);
   const [bannerPreset, setBannerPreset] = useState("sale");
   const [bannerSize, setBannerSize] = useState("1200x628");
-  const [bannerCfg, setBannerCfg] = useState({ ...BANNER_PRESETS[0], productName: "veteran-themed graphic hat", productColor: "black and camo", modelAge: "45", modelGender: "male" });
+  const [bannerCfg, setBannerCfg] = useState({ ...BANNER_PRESETS[0], productName: "", productFullDesc: "" });
+  const [bannerPromptEdit, setBannerPromptEdit] = useState("");
+  const [showPromptEdit, setShowPromptEdit] = useState(false);
 
   const [queue, setQueue] = useState([]);
   const [results, setResults] = useState([]);
@@ -191,7 +209,7 @@ export default function App() {
     const q = [];
     if (bannerMode) {
       imgs.forEach((img) => {
-        const prompt = buildBannerPrompt({ ...bannerCfg, bannerSize: BANNER_SIZES.find((s) => s.id === bannerSize)?.label || bannerSize });
+        const prompt = (showPromptEdit && bannerPromptEdit.trim()) ? bannerPromptEdit : buildBannerPrompt({ ...bannerCfg, bannerSize: BANNER_SIZES.find((s) => s.id === bannerSize)?.label || bannerSize });
         q.push({ id: `${img.id}_banner`, img, label: `Banner — ${bannerCfg.headlineText}`, prompt, isBanner: true });
       });
     } else {
@@ -357,6 +375,11 @@ export default function App() {
               <span style={{ fontSize: 13, color: "#94a3b8" }}>{imgs.length} ảnh × {selScenes.length} scenes = </span><strong style={{ color: "#c4b5fd" }}>{total} mockups</strong>
               <span style={{ fontSize: 12, color: "#64748b", marginLeft: 8 }}>~{Math.ceil((total * (delay + 5)) / 60)} phút</span>
             </div>
+            {selScenes.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <button className="btn btn-s" onClick={() => { const s = MOCKUP_SCENES.find((sc) => sc.id === selScenes[0]); if (s) alert(buildMockupPrompt(s, productName, productColor, productDetails)); }} style={{ fontSize: 11 }}>👁️ Xem prompt mẫu ({MOCKUP_SCENES.find((s) => s.id === selScenes[0])?.label})</button>
+              </div>
+            )}
           </div>
           <button className="btn btn-p" onClick={startGen} disabled={running || !total} style={{ width: "100%" }}>🚀 Generate {total} mockups</button>
         </>)}
@@ -364,51 +387,101 @@ export default function App() {
         {/* ═══ CONFIG — BANNER MODE ═══ */}
         {tab === "config" && bannerMode && (<>
           <div className="card">
-            <h3 style={{ margin: "0 0 10px", fontSize: 15, color: "#c4b5fd" }}>🎯 Banner Generator</h3>
+            <h3 style={{ margin: "0 0 10px", fontSize: 15, color: "#c4b5fd" }}>🎯 Banner Generator — CTCO Prompt</h3>
 
             <label style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 4 }}>Preset phong cách</label>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
-              {BANNER_PRESETS.map((p) => <button key={p.id} className={`btn btn-s ${bannerPreset === p.id ? "" : ""}`} onClick={() => setBannerPreset(p.id)} style={{ fontSize: 12, background: bannerPreset === p.id ? "rgba(124,58,237,.2)" : undefined, borderColor: bannerPreset === p.id ? "rgba(124,58,237,.4)" : undefined, color: bannerPreset === p.id ? "#c4b5fd" : undefined }}>{p.label}</button>)}
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+              {BANNER_PRESETS.map((p) => <button key={p.id} className="btn btn-s" onClick={() => setBannerPreset(p.id)} style={{ fontSize: 12, background: bannerPreset === p.id ? "rgba(124,58,237,.2)" : undefined, borderColor: bannerPreset === p.id ? "rgba(124,58,237,.4)" : undefined, color: bannerPreset === p.id ? "#c4b5fd" : undefined }}>{p.label}</button>)}
             </div>
 
             <label style={{ fontSize: 11, fontWeight: 600, color: "#94a3b8", display: "block", marginBottom: 4 }}>Kích thước banner</label>
             <select className="inp" value={bannerSize} onChange={(e) => setBannerSize(e.target.value)} style={{ marginBottom: 14, cursor: "pointer" }}>
               {BANNER_SIZES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
             </select>
+          </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <Field label="Tên sản phẩm" value={bannerCfg.productName} onChange={(v) => updateBanner("productName", v)} />
-              <Field label="Màu sản phẩm" value={bannerCfg.productColor} onChange={(v) => updateBanner("productColor", v)} />
-              <Field label="Tuổi model" value={bannerCfg.modelAge} onChange={(v) => updateBanner("modelAge", v)} />
-              <Field label="Giới tính model" value={bannerCfg.modelGender} onChange={(v) => updateBanner("modelGender", v)} />
+          {/* LEFT HALF — Model & Product */}
+          <div className="card">
+            <h4 style={{ margin: "0 0 8px", fontSize: 13, color: "#a78bfa" }}>👤 Left Half — Model & Product</h4>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <Field label="Left width" value={bannerCfg.leftWidth} onChange={(v) => updateBanner("leftWidth", v)} placeholder="45%" />
+              <Field label="Model mood" value={bannerCfg.modelMood} onChange={(v) => updateBanner("modelMood", v)} placeholder="confident and proud" />
+              <Field label="Model age" value={bannerCfg.modelAge} onChange={(v) => updateBanner("modelAge", v)} placeholder="45" />
+              <Field label="Model gender" value={bannerCfg.modelGender} onChange={(v) => updateBanner("modelGender", v)} placeholder="male" />
             </div>
+            <Field label="Model features (ngoại hình)" value={bannerCfg.modelFeatures} onChange={(v) => updateBanner("modelFeatures", v)} placeholder="strong athletic build, short cropped hair" />
+            <Field label="Product full description (mô tả đầy đủ sản phẩm mặc)" value={bannerCfg.productFullDesc} onChange={(v) => updateBanner("productFullDesc", v)} placeholder="a black veteran eagle graphic t-shirt with bold white eagle emblem on chest, tucked into dark jeans" rows={2} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <Field label="Lighting style" value={bannerCfg.lightingStyle} onChange={(v) => updateBanner("lightingStyle", v)} />
+              <Field label="Separation technique" value={bannerCfg.separationTechnique} onChange={(v) => updateBanner("separationTechnique", v)} />
+              <Field label="Model brightness" value={bannerCfg.modelBrightness} onChange={(v) => updateBanner("modelBrightness", v)} />
+              <Field label="Model background" value={bannerCfg.modelBg} onChange={(v) => updateBanner("modelBg", v)} />
+            </div>
+          </div>
 
-            <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", marginTop: 14, paddingTop: 14 }}>
-              <h4 style={{ margin: "0 0 8px", fontSize: 13, color: "#a78bfa" }}>📝 Nội dung banner</h4>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <Field label="Hook text (dòng nhỏ trên cùng)" value={bannerCfg.hookText} onChange={(v) => updateBanner("hookText", v)} />
-                <Field label="Headline (dòng lớn nhất)" value={bannerCfg.headlineText} onChange={(v) => updateBanner("headlineText", v)} />
-                <Field label="Sub text" value={bannerCfg.subText} onChange={(v) => updateBanner("subText", v)} />
-                <Field label="Offer label (pill badge)" value={bannerCfg.offerLabel} onChange={(v) => updateBanner("offerLabel", v)} />
-                <Field label="CTA text (nút bấm)" value={bannerCfg.ctaText} onChange={(v) => updateBanner("ctaText", v)} />
-                <Field label="CTA color" value={bannerCfg.ctaColor} onChange={(v) => updateBanner("ctaColor", v)} />
-              </div>
+          {/* RIGHT HALF — Text & CTA */}
+          <div className="card">
+            <h4 style={{ margin: "0 0 8px", fontSize: 13, color: "#a78bfa" }}>📝 Right Half — Text & CTA</h4>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <Field label="Right width" value={bannerCfg.rightWidth} onChange={(v) => updateBanner("rightWidth", v)} placeholder="55%" />
+              <Field label="Hook BG style" value={bannerCfg.hookBgStyle} onChange={(v) => updateBanner("hookBgStyle", v)} />
+              <Field label="Hook text (top small)" value={bannerCfg.hookText} onChange={(v) => updateBanner("hookText", v)} />
+              <Field label="Headline (largest text)" value={bannerCfg.headlineText} onChange={(v) => updateBanner("headlineText", v)} />
+              <Field label="Sub text" value={bannerCfg.subText} onChange={(v) => updateBanner("subText", v)} />
+              <Field label="Offer label (pill)" value={bannerCfg.offerLabel} onChange={(v) => updateBanner("offerLabel", v)} />
             </div>
+            <Field label="Product name (hiện trong box)" value={bannerCfg.productName} onChange={(v) => updateBanner("productName", v)} placeholder="Eagle Veteran T-Shirt" />
+            <Field label="Product display (cách hiện SP)" value={bannerCfg.productDisplay} onChange={(v) => updateBanner("productDisplay", v)} placeholder="front-facing product shot" />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <Field label="Badge type" value={bannerCfg.badgeType} onChange={(v) => updateBanner("badgeType", v)} />
+              <Field label="Badge icon" value={bannerCfg.badgeIcon} onChange={(v) => updateBanner("badgeIcon", v)} />
+              <Field label="Badge text" value={bannerCfg.badgeText} onChange={(v) => updateBanner("badgeText", v)} />
+              <Field label="Badge color" value={bannerCfg.badgeColor} onChange={(v) => updateBanner("badgeColor", v)} />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <Field label="CTA color" value={bannerCfg.ctaColor} onChange={(v) => updateBanner("ctaColor", v)} />
+              <Field label="CTA text" value={bannerCfg.ctaText} onChange={(v) => updateBanner("ctaText", v)} />
+              <Field label="Footer left (tuỳ chọn)" value={bannerCfg.footerLeft} onChange={(v) => updateBanner("footerLeft", v)} placeholder="YourStore.com" />
+              <Field label="Footer right (tuỳ chọn)" value={bannerCfg.footerRight} onChange={(v) => updateBanner("footerRight", v)} placeholder="Free Shipping" />
+            </div>
+          </div>
 
-            <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", marginTop: 14, paddingTop: 14 }}>
-              <h4 style={{ margin: "0 0 8px", fontSize: 13, color: "#a78bfa" }}>🎨 Style</h4>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <Field label="Background color" value={bannerCfg.bgColor} onChange={(v) => updateBanner("bgColor", v)} />
-                <Field label="Background pattern" value={bannerCfg.bgPattern} onChange={(v) => updateBanner("bgPattern", v)} />
-                <Field label="Badge text" value={bannerCfg.badgeText} onChange={(v) => updateBanner("badgeText", v)} />
-                <Field label="Overall style" value={bannerCfg.overallStyle} onChange={(v) => updateBanner("overallStyle", v)} />
-              </div>
+          {/* Background & Style */}
+          <div className="card">
+            <h4 style={{ margin: "0 0 8px", fontSize: 13, color: "#a78bfa" }}>🎨 Background & Style</h4>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <Field label="BG color" value={bannerCfg.bgColor} onChange={(v) => updateBanner("bgColor", v)} />
+              <Field label="BG pattern" value={bannerCfg.bgPattern} onChange={(v) => updateBanner("bgPattern", v)} />
+              <Field label="Pattern detail" value={bannerCfg.patternDetail} onChange={(v) => updateBanner("patternDetail", v)} />
+              <Field label="Texture style" value={bannerCfg.textureStyle} onChange={(v) => updateBanner("textureStyle", v)} />
+              <Field label="BG mood" value={bannerCfg.bgMood} onChange={(v) => updateBanner("bgMood", v)} />
+              <Field label="Overall style" value={bannerCfg.overallStyle} onChange={(v) => updateBanner("overallStyle", v)} />
             </div>
+          </div>
 
-            <div style={{ marginTop: 14, padding: "10px 14px", borderRadius: 10, background: "rgba(124,58,237,.06)", border: "1px solid rgba(124,58,237,.12)" }}>
-              <strong style={{ color: "#c4b5fd" }}>{imgs.length} banner{imgs.length > 1 ? "s" : ""}</strong>
-              <span style={{ fontSize: 12, color: "#64748b", marginLeft: 8 }}>~{Math.ceil((imgs.length * (delay + 5)) / 60)} phút</span>
+          {/* PROMPT PREVIEW & EDIT */}
+          <div className="card">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <h4 style={{ margin: 0, fontSize: 13, color: "#a78bfa" }}>📋 Preview & Edit Prompt</h4>
+              <button className="btn btn-s" onClick={() => { const p = buildBannerPrompt({ ...bannerCfg, bannerSize: BANNER_SIZES.find((s) => s.id === bannerSize)?.label || bannerSize }); setBannerPromptEdit(p); setShowPromptEdit(true); }} style={{ fontSize: 11 }}>🔄 Generate prompt</button>
             </div>
+            {showPromptEdit ? (
+              <>
+                <textarea className="inp" value={bannerPromptEdit} onChange={(e) => setBannerPromptEdit(e.target.value)} rows={8} style={{ fontSize: 12, lineHeight: 1.5 }} />
+                <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+                  <button className="btn btn-s" onClick={() => setShowPromptEdit(false)} style={{ fontSize: 11 }}>Ẩn</button>
+                  <button className="btn btn-s" onClick={() => { setBannerPromptEdit(buildBannerPrompt({ ...bannerCfg, bannerSize: BANNER_SIZES.find((s) => s.id === bannerSize)?.label || bannerSize })); }} style={{ fontSize: 11 }}>🔄 Reset từ form</button>
+                  <span style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>Sửa trực tiếp prompt — app sẽ dùng bản này khi generate</span>
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 11, color: "#64748b" }}>Click "Generate prompt" để xem và tuỳ chỉnh prompt trước khi generate.</div>
+            )}
+          </div>
+
+          <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(124,58,237,.06)", border: "1px solid rgba(124,58,237,.12)", marginBottom: 14 }}>
+            <strong style={{ color: "#c4b5fd" }}>{imgs.length} banner{imgs.length > 1 ? "s" : ""}</strong>
+            <span style={{ fontSize: 12, color: "#64748b", marginLeft: 8 }}>~{Math.ceil((imgs.length * (delay + 5)) / 60)} phút</span>
           </div>
           <button className="btn btn-p" onClick={startGen} disabled={running || !imgs.length} style={{ width: "100%" }}>🎯 Generate {imgs.length} Banner{imgs.length > 1 ? "s" : ""}</button>
         </>)}
