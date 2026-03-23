@@ -40,6 +40,15 @@ const MOCKUP_SCENES = [
   { id: "white_bg", label: "White BG", icon: "⬜", desc: "Nền trắng e-commerce",
     vars: { SHOT_TYPE: "product photo", MOOD: "clean and commercial", AGE: "", GENDER_DESC: "", PHYSICAL_FEATURES: "", BASE_OUTFIT: "", WEARING_STYLE: "positioned at a slight angle showing dimension and form", POSE: "centered with minimal soft shadow underneath", POSE_PURPOSE: "", LIGHTING_STYLE: "Even soft studio lighting", LIGHTING_DETAIL: "no harsh shadows, perfectly balanced exposure", SETTING: "a pure white infinity background", SETTING_DETAIL: "seamless white with subtle ground shadow for depth" },
     customPrompt: true },
+  // ── NEW SCENES ──
+  { id: "patriotic_portrait", label: "Patriotic Portrait", icon: "🎖️", desc: "Editorial cinematic portrait",
+    vars: { SHOT_TYPE: "close-up profile", MOOD: "solemn, resolute, and reverent", AGE: "52", GENDER_DESC: "male veteran", PHYSICAL_FEATURES: "with a graying beard, weathered face, strong jaw, and detailed military tattoos on forearm including parachutist wings and unit crests", BASE_OUTFIT: "a fitted black t-shirt with subtle patriotic graphic", WEARING_STYLE: "worn with quiet pride and military bearing", POSE: "performing a sharp military salute, hand crisp at the brow", POSE_PURPOSE: "gazing into the distance with solemn respect", LIGHTING_STYLE: "Natural diffused cinematic lighting, extremely shallow depth of field", LIGHTING_DETAIL: "sharp focus on face, beard, hand, and cap details, everything else beautifully blurred", SETTING: "outdoors with a massive American flag waving behind", SETTING_DETAIL: "blurred city harbor or memorial in the background, Fujifilm film simulation color grade, reverent patriotic editorial style" } },
+  { id: "motorcycle_biker", label: "Motorcycle / Biker", icon: "🏍️", desc: "Veteran cưỡi hoặc đứng cạnh xe",
+    vars: { SHOT_TYPE: "three-quarter", MOOD: "fierce, free-spirited, and rebellious", AGE: "50", GENDER_DESC: "male veteran biker", PHYSICAL_FEATURES: "with a thick salt-and-pepper beard, muscular arms with military and eagle tattoos, sun-weathered skin, and aviator sunglasses pushed up on forehead", BASE_OUTFIT: "worn dark denim jeans, heavy black motorcycle boots, and a black leather vest over a dark henley shirt", WEARING_STYLE: "layered ruggedly with biker attitude", POSE: "straddling a classic Harley-Davidson motorcycle, one hand on the handlebar", POSE_PURPOSE: "looking at the camera with a confident half-grin", LIGHTING_STYLE: "Warm late afternoon golden light from the side", LIGHTING_DETAIL: "chrome reflections on the motorcycle, dramatic shadows on the face", SETTING: "a scenic empty highway with open desert or mountain road stretching behind", SETTING_DETAIL: "American flag bandana tied to the handlebars, leather saddlebags visible, Route 66 vibes" } },
+  { id: "gift_unboxing", label: "Gift / Unboxing", icon: "🎁", desc: "Quà tặng, mở hộp",
+    vars: { SHOT_TYPE: "medium overhead angle", MOOD: "warm, heartfelt, and celebratory", AGE: "55", GENDER_DESC: "male veteran", PHYSICAL_FEATURES: "with kind eyes, warm genuine smile, and silver hair", BASE_OUTFIT: "a comfortable plaid flannel shirt and reading glasses perched on nose", WEARING_STYLE: "being unwrapped from tissue paper inside a premium gift box", POSE: "seated at a dining table, holding up the product with both hands, admiring it", POSE_PURPOSE: "smiling warmly at the gift with visible emotion", LIGHTING_STYLE: "Soft warm indoor lighting", LIGHTING_DETAIL: "cozy ambient glow from a nearby window, holiday warmth", SETTING: "a warm family living room", SETTING_DETAIL: "a handwritten card reading 'Thank You For Your Service' on the table, gift wrapping paper and ribbon scattered nearby, family photos in the background" } },
+  { id: "ugc_review", label: "UGC / Review", icon: "📱", desc: "Selfie style, trông như review thật",
+    vars: { SHOT_TYPE: "smartphone selfie", MOOD: "casual, authentic, and genuinely happy", AGE: "42", GENDER_DESC: "male veteran", PHYSICAL_FEATURES: "with a friendly face, neat stubble, and a natural relaxed expression", BASE_OUTFIT: "casual everyday clothes", WEARING_STYLE: "worn naturally as if just received in the mail", POSE: "taking a mirror selfie or front-camera selfie, holding phone visible in frame", POSE_PURPOSE: "grinning proudly and pointing at the product with the other hand", LIGHTING_STYLE: "Natural indoor lighting, slightly warm, phone camera quality", LIGHTING_DETAIL: "minor lens distortion, realistic phone photo look, not overly polished", SETTING: "a normal bedroom or hallway with a mirror", SETTING_DETAIL: "an open shipping box from an online order visible on the bed or floor behind, casual messy-but-real home environment, looks like a genuine customer photo NOT a professional shoot" } },
 ];
 
 function buildMockupPrompt(scene, productName, productColor, productDetails) {
@@ -136,6 +145,83 @@ async function genImage(plat, key, model, b64, mime, prompt, sig, size) {
 }
 
 // ════════════════════════════════════════════════════════════
+// AI PRODUCT ANALYZER — Gemini phân tích ảnh sản phẩm
+// ════════════════════════════════════════════════════════════
+
+const ANALYZE_PROMPT = `You are a product photography expert AND marketing creative director for a US Veterans apparel e-commerce store. Analyze this product image carefully and return a JSON object. Be VERY specific and detailed.
+
+Return ONLY valid JSON, no markdown, no backticks, no explanation:
+{
+  "productName": "Navy Veteran Embroidered Baseball Cap",
+  "productColor": "black with gold and navy blue accents",
+  "productType": "hat",
+  "productDetails": "Navy anchor and eagle emblem embroidered on front panel in gold thread, UNITED STATES NAVY text arc above emblem, 1775-2025 dates flanking the emblem, gold laurel wreath below, structured 6-panel design, pre-curved brim with gold leaf oak clusters, adjustable snapback closure",
+  "productFullDesc": "a black Navy veteran embroidered baseball cap with gold eagle emblem on front, gold oak leaf details on brim, structured fit, PAIRED WITH a dark navy blue fitted t-shirt with small American flag on chest, dark fitted jeans, and brown leather belt",
+  "suggestedScenes": ["on_model_male", "patriotic_portrait", "motorcycle_biker", "flat_lay", "closeup", "ugc_review"],
+  "targetAudience": "US Navy veterans, 40-65 years old, proud of their service",
+  "bannerSuggestions": {
+    "hookText": "HONOR YOUR SERVICE",
+    "headlineText": "NAVY VETERAN COLLECTION",
+    "subText": "PREMIUM EMBROIDERED CAPS — BUILT TO LAST",
+    "offerLabel": "BEST SELLER",
+    "ctaText": "SHOP NAVY VETERAN GEAR",
+    "ctaColor": "bright gold with navy border",
+    "productDisplay": "front-angled product shot showing embroidery detail",
+    "productName": "Navy Veteran Embroidered Cap",
+    "badgeType": "military shield",
+    "badgeIcon": "★",
+    "badgeText": "TRUSTED BY 50,000+ VETERANS",
+    "badgeColor": "gold on navy",
+    "bgColor": "deep navy blue",
+    "bgPattern": "subtle anchor pattern watermark",
+    "patternDetail": "faded nautical rope border accent",
+    "textureStyle": "smooth matte military grade",
+    "bgMood": "proud, authoritative, premium",
+    "overallStyle": "premium military navy themed with gold accents, clean typography",
+    "modelMood": "proud and commanding",
+    "modelAge": "50",
+    "modelGender": "male",
+    "modelFeatures": "weathered face, salt-and-pepper beard, strong jaw, Navy anchor tattoo on forearm, broad shoulders",
+    "productFullDesc": "a black Navy veteran embroidered cap with gold eagle on front AND a fitted dark navy t-shirt with small anchor emblem, dark jeans, brown leather belt",
+    "lightingStyle": "warm golden hour side lighting with cinematic depth",
+    "separationTechnique": "soft edge blend with slight vignette",
+    "modelBrightness": "warm natural skin tones, slightly elevated",
+    "modelBg": "dark navy gradient matching banner background",
+    "hookBgStyle": "semi-transparent gold accent strip",
+    "leftWidth": "45%",
+    "rightWidth": "55%",
+    "footerLeft": "",
+    "footerRight": ""
+  }
+}
+
+CRITICAL RULES:
+1. productFullDesc MUST include FULL outfit (shirt + pants + belt + shoes), not just the product being sold. This prevents AI from generating shirtless models.
+2. bannerSuggestions.productFullDesc must ALSO include full outfit for the banner model.
+3. Match banner colors/mood to the product's military branch or theme (Navy=blue/gold, Army=green/black, Marines=red/gold, Air Force=blue/silver, general veteran=red/white/blue).
+4. modelFeatures should include appropriate tattoos and physical traits matching the military branch.
+5. suggestedScenes should include the new scenes: patriotic_portrait, motorcycle_biker, gift_unboxing, ugc_review when appropriate.
+6. lightingStyle and modelBg should complement the bgColor for a cohesive banner look.
+7. Be creative with hookText and headlineText — make them emotionally compelling for veterans.`;
+
+async function analyzeProduct(geminiKey, imageBase64, mimeType) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+  const body = {
+    contents: [{ role: "user", parts: [
+      { inline_data: { mime_type: mimeType, data: imageBase64 } },
+      { text: ANALYZE_PROMPT }
+    ] }],
+    generationConfig: { responseMimeType: "application/json" },
+  };
+  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.error?.message || `Gemini Analyze Error ${res.status}`); }
+  const data = await res.json();
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  const clean = text.replace(/```json|```/g, "").trim();
+  return JSON.parse(clean);
+}
+
+// ════════════════════════════════════════════════════════════
 // UI HELPERS
 // ════════════════════════════════════════════════════════════
 
@@ -175,6 +261,8 @@ export default function App() {
   const [bannerCfg, setBannerCfg] = useState({ ...BANNER_PRESETS[0], productName: "", productFullDesc: "" });
   const [bannerPromptEdit, setBannerPromptEdit] = useState("");
   const [showPromptEdit, setShowPromptEdit] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeResult, setAnalyzeResult] = useState(null);
 
   const [queue, setQueue] = useState([]);
   const [results, setResults] = useState([]);
@@ -200,6 +288,72 @@ export default function App() {
   const onUpload = (e) => { Array.from(e.target.files).forEach((f) => { const r = new FileReader(); r.onload = (ev) => setImgs((p) => [...p, { id: `${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, name: f.name, url: ev.target.result, b64: ev.target.result.split(",")[1], mime: f.type }]); r.readAsDataURL(f); }); e.target.value = ""; };
   const toggleScene = (id) => setSelScenes((p) => p.includes(id) ? p.filter((t) => t !== id) : [...p, id]);
   const updateBanner = (k, v) => setBannerCfg((p) => ({ ...p, [k]: v }));
+
+  // ── AI ANALYZE ──
+  const handleAnalyze = async (img) => {
+    const geminiKey = keys.gemini;
+    if (!geminiKey) { log("Cần Gemini API key để phân tích ảnh! Vào Setup → chọn Gemini → nhập key.", "error"); return; }
+    setAnalyzing(true); log(`🔍 AI đang phân tích: ${img.name}...`);
+    try {
+      const result = await analyzeProduct(geminiKey, img.b64, img.mime);
+      setAnalyzeResult(result);
+      // Auto-fill mockup fields
+      if (result.productName) setProductName(result.productName);
+      if (result.productColor) setProductColor(result.productColor);
+      if (result.productDetails) setProductDetails(result.productDetails);
+      if (result.suggestedScenes) setSelScenes(result.suggestedScenes);
+      // Auto-fill ALL banner fields from analysis
+      const bs = result.bannerSuggestions || {};
+      setBannerCfg((prev) => ({
+        ...prev,
+        productName: bs.productName || result.productName || prev.productName,
+        productFullDesc: bs.productFullDesc || result.productFullDesc || prev.productFullDesc,
+        // Model fields
+        modelMood: bs.modelMood || prev.modelMood,
+        modelAge: bs.modelAge || prev.modelAge,
+        modelGender: bs.modelGender || prev.modelGender,
+        modelFeatures: bs.modelFeatures || prev.modelFeatures,
+        lightingStyle: bs.lightingStyle || prev.lightingStyle,
+        separationTechnique: bs.separationTechnique || prev.separationTechnique,
+        modelBrightness: bs.modelBrightness || prev.modelBrightness,
+        modelBg: bs.modelBg || prev.modelBg,
+        // Content fields
+        hookText: bs.hookText || prev.hookText,
+        hookBgStyle: bs.hookBgStyle || prev.hookBgStyle,
+        headlineText: bs.headlineText || prev.headlineText,
+        subText: bs.subText || prev.subText,
+        offerLabel: bs.offerLabel || prev.offerLabel,
+        productDisplay: bs.productDisplay || prev.productDisplay,
+        ctaText: bs.ctaText || prev.ctaText,
+        ctaColor: bs.ctaColor || prev.ctaColor,
+        badgeType: bs.badgeType || prev.badgeType,
+        badgeIcon: bs.badgeIcon || prev.badgeIcon,
+        badgeText: bs.badgeText || prev.badgeText,
+        badgeColor: bs.badgeColor || prev.badgeColor,
+        footerLeft: bs.footerLeft ?? prev.footerLeft,
+        footerRight: bs.footerRight ?? prev.footerRight,
+        // Style fields
+        bgColor: bs.bgColor || prev.bgColor,
+        bgPattern: bs.bgPattern || prev.bgPattern,
+        patternDetail: bs.patternDetail || prev.patternDetail,
+        textureStyle: bs.textureStyle || prev.textureStyle,
+        bgMood: bs.bgMood || prev.bgMood,
+        overallStyle: bs.overallStyle || prev.overallStyle,
+        leftWidth: bs.leftWidth || prev.leftWidth,
+        rightWidth: bs.rightWidth || prev.rightWidth,
+      }));
+      // Reset prompt editor so it regenerates with new values
+      setBannerPromptEdit("");
+      
+      const filledCount = Object.keys(bs).length;
+      log(`✅ Phân tích xong: ${result.productName} (${result.productType})`, "success");
+      log(`🎨 Banner: đã tự điền ${filledCount} fields (model, background, text, style)`, "success");
+      log(`💡 Bạn có thể review & sửa tất cả trong tab ${bannerMode ? "Banner" : "Mockup"}.`, "info");
+    } catch (err) {
+      log(`❌ Lỗi phân tích: ${err.message}`, "error");
+    }
+    setAnalyzing(false);
+  };
 
   // ── GENERATE ──
   const startGen = async () => {
@@ -339,6 +493,64 @@ export default function App() {
             </div>
             {imgs.length > 0 && <div style={{ marginTop: 14 }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span style={{ fontSize: 13, fontWeight: 600, color: "#94a3b8" }}>{imgs.length} ảnh</span><button className="btn btn-s" onClick={() => setImgs([])} style={{ fontSize: 11 }}>Xoá hết</button></div><div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(85px,1fr))", gap: 6 }}>{imgs.map((img) => <div key={img.id} style={{ position: "relative" }}><img src={img.url} alt="" style={{ width: "100%", height: 85, objectFit: "cover", borderRadius: 8, border: "1px solid rgba(255,255,255,.08)" }} /><button onClick={() => setImgs((p) => p.filter((i) => i.id !== img.id))} style={{ position: "absolute", top: 2, right: 2, width: 18, height: 18, borderRadius: "50%", border: "none", background: "rgba(220,38,38,.8)", color: "#fff", fontSize: 9, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button></div>)}</div></div>}
           </div>
+
+          {/* AI ANALYZE */}
+          {imgs.length > 0 && (
+            <div className="card" style={{ border: "1px solid rgba(168,139,250,.3)", background: "rgba(124,58,237,.04)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                <span style={{ fontSize: 22 }}>🧠</span>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: 14, color: "#c4b5fd" }}>AI Product Analyzer</h4>
+                  <p style={{ margin: 0, fontSize: 11, color: "#64748b" }}>Gemini phân tích ảnh → tự động gợi ý prompt, nội dung, scene phù hợp</p>
+                </div>
+              </div>
+
+              {!keys.gemini && (
+                <div style={{ padding: "8px 10px", borderRadius: 6, background: "rgba(250,204,21,.08)", border: "1px solid rgba(250,204,21,.15)", marginBottom: 8, fontSize: 11, color: "#fcd34d" }}>
+                  ⚠ Cần Gemini API key (free) để dùng tính năng này. Vào Setup → chọn Gemini → nhập key.
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {imgs.map((img) => (
+                  <button key={img.id} className="btn btn-s" disabled={analyzing || !keys.gemini} onClick={() => handleAnalyze(img)} style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                    <img src={img.url} alt="" style={{ width: 24, height: 24, objectFit: "cover", borderRadius: 4 }} />
+                    {analyzing ? "Đang phân tích..." : `Analyze: ${img.name.slice(0, 20)}`}
+                  </button>
+                ))}
+              </div>
+
+              {analyzeResult && (
+                <div style={{ marginTop: 12, padding: "12px 14px", borderRadius: 8, background: "rgba(0,0,0,.2)" }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#6ee7b7", marginBottom: 6 }}>✅ Kết quả phân tích:</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 12 }}>
+                    <div><span style={{ color: "#64748b" }}>Sản phẩm:</span> <span style={{ color: "#e2e8f0" }}>{analyzeResult.productName}</span></div>
+                    <div><span style={{ color: "#64748b" }}>Loại:</span> <span style={{ color: "#e2e8f0" }}>{analyzeResult.productType}</span></div>
+                    <div><span style={{ color: "#64748b" }}>Màu:</span> <span style={{ color: "#e2e8f0" }}>{analyzeResult.productColor}</span></div>
+                    <div><span style={{ color: "#64748b" }}>Audience:</span> <span style={{ color: "#e2e8f0" }}>{analyzeResult.targetAudience}</span></div>
+                  </div>
+                  <div style={{ marginTop: 6, fontSize: 11, color: "#64748b" }}>
+                    Mockup scenes: {analyzeResult.suggestedScenes?.join(", ")}
+                  </div>
+                  {analyzeResult.bannerSuggestions && (
+                    <div style={{ marginTop: 8, padding: "8px 10px", borderRadius: 6, background: "rgba(124,58,237,.08)", border: "1px solid rgba(124,58,237,.15)" }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: "#c4b5fd", marginBottom: 4 }}>🎯 Banner auto-fill:</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, fontSize: 11 }}>
+                        <div><span style={{ color: "#64748b" }}>Model:</span> <span style={{ color: "#94a3b8" }}>{analyzeResult.bannerSuggestions.modelMood} {analyzeResult.bannerSuggestions.modelAge}y {analyzeResult.bannerSuggestions.modelGender}</span></div>
+                        <div><span style={{ color: "#64748b" }}>BG:</span> <span style={{ color: "#94a3b8" }}>{analyzeResult.bannerSuggestions.bgColor}</span></div>
+                        <div><span style={{ color: "#64748b" }}>Headline:</span> <span style={{ color: "#94a3b8" }}>{analyzeResult.bannerSuggestions.headlineText}</span></div>
+                        <div><span style={{ color: "#64748b" }}>Style:</span> <span style={{ color: "#94a3b8" }}>{analyzeResult.bannerSuggestions.overallStyle?.slice(0, 40)}</span></div>
+                      </div>
+                    </div>
+                  )}
+                  <div style={{ marginTop: 6, fontSize: 11, color: "#a78bfa" }}>
+                    → Đã tự điền TẤT CẢ fields (mockup + banner). Nhấn "Tiếp" để review & sửa.
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           <button className="btn btn-p" onClick={() => imgs.length && setTab("config")} disabled={!imgs.length} style={{ width: "100%" }}>Tiếp → {bannerMode ? "Cấu hình Banner" : "Chọn Mockup"}</button>
         </>)}
 
@@ -356,9 +568,11 @@ export default function App() {
           <div className="card">
             <h3 style={{ margin: "0 0 10px", fontSize: 15, color: "#c4b5fd" }}>🎨 Chọn scene mockup (CTCO)</h3>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-              <button className="btn btn-s" onClick={() => setSelScenes(["on_model_male", "lifestyle_bbq", "closeup", "flat_lay"])} style={{ fontSize: 12 }}>⚡ Quick (4)</button>
-              <button className="btn btn-s" onClick={() => setSelScenes(MOCKUP_SCENES.map((s) => s.id))} style={{ fontSize: 12 }}>🎯 Full (8)</button>
-              <button className="btn btn-s" onClick={() => setSelScenes(["on_model_male", "closeup", "white_bg"])} style={{ fontSize: 12 }}>🛒 E-com (3)</button>
+              <button className="btn btn-s" onClick={() => setSelScenes(["on_model_male", "patriotic_portrait", "lifestyle_bbq", "closeup"])} style={{ fontSize: 12 }}>⚡ Quick (4)</button>
+              <button className="btn btn-s" onClick={() => setSelScenes(MOCKUP_SCENES.map((s) => s.id))} style={{ fontSize: 12 }}>🎯 Full (12)</button>
+              <button className="btn btn-s" onClick={() => setSelScenes(["on_model_male", "closeup", "white_bg", "ugc_review"])} style={{ fontSize: 12 }}>🛒 E-com (4)</button>
+              <button className="btn btn-s" onClick={() => setSelScenes(["patriotic_portrait", "motorcycle_biker", "lifestyle_bbq", "lifestyle_outdoor", "ugc_review"])} style={{ fontSize: 12 }}>📱 Social (5)</button>
+              <button className="btn btn-s" onClick={() => setSelScenes(["gift_unboxing", "on_model_female", "patriotic_portrait", "ugc_review"])} style={{ fontSize: 12 }}>🎁 Gift (4)</button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
               {MOCKUP_SCENES.map((s) => (
