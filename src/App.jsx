@@ -148,15 +148,24 @@ async function genImage(plat, key, model, b64, mime, prompt, sig, size) {
 // AI PRODUCT ANALYZER — Gemini phân tích ảnh sản phẩm
 // ════════════════════════════════════════════════════════════
 
-const ANALYZE_PROMPT = `You are a product photography expert AND marketing creative director for a US Veterans apparel e-commerce store. Analyze this product image carefully and return a JSON object. Be VERY specific and detailed.
+function buildAnalyzePrompt(userNotes) {
+  return `You are a product photography expert AND marketing creative director for a US Veterans apparel e-commerce store. Analyze this product image carefully and return a JSON object. Be VERY specific and detailed.
+
+${userNotes ? `USER NOTES (follow these instructions carefully):\n${userNotes}\n` : ""}
+
+IMPORTANT — CUSTOM TEXT & YEAR REPLACEMENT:
+- If the product has placeholder text like "CUSTOM TEXT", "YOUR NAME", "CUSTOM NAME", "[NAME]", or any obviously editable text field → replace it with a realistic American veteran name like "JOHNSON", "WILLIAM", "RODRIGUEZ", "MITCHELL", etc. Pick a name that fits the military branch theme.
+- If the product has placeholder years like "0000", "XXXX", "0000-0000", or obviously fake year ranges → replace with realistic military service years like "1975-2003", "1982-2010", "1969-1995", etc. Make the years plausible for the military branch and era shown.
+- In your productDetails and productFullDesc, describe the product WITH the replaced text/years, not the placeholders.
 
 Return ONLY valid JSON, no markdown, no backticks, no explanation:
 {
   "productName": "Navy Veteran Embroidered Baseball Cap",
   "productColor": "black with gold and navy blue accents",
   "productType": "hat",
-  "productDetails": "Navy anchor and eagle emblem embroidered on front panel in gold thread, UNITED STATES NAVY text arc above emblem, 1775-2025 dates flanking the emblem, gold laurel wreath below, structured 6-panel design, pre-curved brim with gold leaf oak clusters, adjustable snapback closure",
-  "productFullDesc": "a black Navy veteran embroidered baseball cap with gold eagle emblem on front, gold oak leaf details on brim, structured fit, PAIRED WITH a dark navy blue fitted t-shirt with small American flag on chest, dark fitted jeans, and brown leather belt",
+  "customTextReplaced": {"originalText": "CUSTOM NAME", "replacedWith": "JOHNSON", "originalYears": "0000-0000", "replacedYears": "1975-2003"},
+  "productDetails": "Navy anchor and eagle emblem embroidered on front panel in gold thread, name JOHNSON embroidered below, service years 1975-2003 flanking the emblem, gold laurel wreath, structured 6-panel design, pre-curved brim with gold leaf oak clusters",
+  "productFullDesc": "a black Navy veteran embroidered baseball cap with JOHNSON name and 1975-2003 service years, gold eagle emblem on front, gold oak leaf details on brim, PAIRED WITH a dark navy blue fitted t-shirt, dark fitted jeans, and brown leather belt",
   "suggestedScenes": ["on_model_male", "patriotic_portrait", "motorcycle_biker", "flat_lay", "closeup", "ugc_review"],
   "targetAudience": "US Navy veterans, 40-65 years old, proud of their service",
   "bannerSuggestions": {
@@ -182,7 +191,7 @@ Return ONLY valid JSON, no markdown, no backticks, no explanation:
     "modelAge": "50",
     "modelGender": "male",
     "modelFeatures": "weathered face, salt-and-pepper beard, strong jaw, Navy anchor tattoo on forearm, broad shoulders",
-    "productFullDesc": "a black Navy veteran embroidered cap with gold eagle on front AND a fitted dark navy t-shirt with small anchor emblem, dark jeans, brown leather belt",
+    "productFullDesc": "a black Navy veteran embroidered cap with JOHNSON name and gold eagle on front AND a fitted dark navy t-shirt, dark jeans, brown leather belt",
     "lightingStyle": "warm golden hour side lighting with cinematic depth",
     "separationTechnique": "soft edge blend with slight vignette",
     "modelBrightness": "warm natural skin tones, slightly elevated",
@@ -196,20 +205,22 @@ Return ONLY valid JSON, no markdown, no backticks, no explanation:
 }
 
 CRITICAL RULES:
-1. productFullDesc MUST include FULL outfit (shirt + pants + belt + shoes), not just the product being sold. This prevents AI from generating shirtless models.
-2. bannerSuggestions.productFullDesc must ALSO include full outfit for the banner model.
-3. Match banner colors/mood to the product's military branch or theme (Navy=blue/gold, Army=green/black, Marines=red/gold, Air Force=blue/silver, general veteran=red/white/blue).
-4. modelFeatures should include appropriate tattoos and physical traits matching the military branch.
-5. suggestedScenes should include the new scenes: patriotic_portrait, motorcycle_biker, gift_unboxing, ugc_review when appropriate.
-6. lightingStyle and modelBg should complement the bgColor for a cohesive banner look.
-7. Be creative with hookText and headlineText — make them emotionally compelling for veterans.`;
+1. productFullDesc MUST include FULL outfit (shirt + pants + belt + shoes), not just the product. Prevents shirtless models.
+2. bannerSuggestions.productFullDesc must ALSO include full outfit.
+3. Match colors/mood to military branch (Navy=blue/gold, Army=green/black, Marines=red/gold, Air Force=blue/silver).
+4. modelFeatures: include tattoos and traits matching the military branch.
+5. suggestedScenes: include patriotic_portrait, motorcycle_biker, gift_unboxing, ugc_review when appropriate.
+6. lightingStyle and modelBg should complement bgColor.
+7. ALWAYS replace placeholder text/years with realistic values. Include what you replaced in customTextReplaced.
+8. If user provided notes above, follow their specific instructions for names, years, style, or any other preferences.`;
+}
 
-async function analyzeProduct(geminiKey, imageBase64, mimeType) {
+async function analyzeProduct(geminiKey, imageBase64, mimeType, userNotes) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
   const body = {
     contents: [{ role: "user", parts: [
       { inline_data: { mime_type: mimeType, data: imageBase64 } },
-      { text: ANALYZE_PROMPT }
+      { text: buildAnalyzePrompt(userNotes) }
     ] }],
     generationConfig: { responseMimeType: "application/json" },
   };
@@ -249,6 +260,7 @@ export default function App() {
   const [model, setModel] = useState("");
   const [size, setSize] = useState("");
   const [imgs, setImgs] = useState([]);
+  const [userNotes, setUserNotes] = useState("");
   const [selScenes, setSelScenes] = useState(["on_model_male", "lifestyle_bbq", "closeup", "flat_lay"]);
   const [productName, setProductName] = useState("veteran-themed graphic hat");
   const [productColor, setProductColor] = useState("black and camo");
@@ -295,8 +307,14 @@ export default function App() {
     if (!geminiKey) { log("Cần Gemini API key để phân tích ảnh! Vào Setup → chọn Gemini → nhập key.", "error"); return; }
     setAnalyzing(true); log(`🔍 AI đang phân tích: ${img.name}...`);
     try {
-      const result = await analyzeProduct(geminiKey, img.b64, img.mime);
+      const result = await analyzeProduct(geminiKey, img.b64, img.mime, userNotes);
       setAnalyzeResult(result);
+      // Show custom text replacements
+      if (result.customTextReplaced) {
+        const ct = result.customTextReplaced;
+        if (ct.originalText) log(`📝 Text: "${ct.originalText}" → "${ct.replacedWith}"`, "info");
+        if (ct.originalYears) log(`📅 Years: "${ct.originalYears}" → "${ct.replacedYears}"`, "info");
+      }
       // Auto-fill mockup fields
       if (result.productName) setProductName(result.productName);
       if (result.productColor) setProductColor(result.productColor);
@@ -494,6 +512,21 @@ export default function App() {
             {imgs.length > 0 && <div style={{ marginTop: 14 }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}><span style={{ fontSize: 13, fontWeight: 600, color: "#94a3b8" }}>{imgs.length} ảnh</span><button className="btn btn-s" onClick={() => setImgs([])} style={{ fontSize: 11 }}>Xoá hết</button></div><div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(85px,1fr))", gap: 6 }}>{imgs.map((img) => <div key={img.id} style={{ position: "relative" }}><img src={img.url} alt="" style={{ width: "100%", height: 85, objectFit: "cover", borderRadius: 8, border: "1px solid rgba(255,255,255,.08)" }} /><button onClick={() => setImgs((p) => p.filter((i) => i.id !== img.id))} style={{ position: "absolute", top: 2, right: 2, width: 18, height: 18, borderRadius: "50%", border: "none", background: "rgba(220,38,38,.8)", color: "#fff", fontSize: 9, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button></div>)}</div></div>}
           </div>
 
+          {/* USER NOTES FOR AI */}
+          {imgs.length > 0 && (
+            <div className="card">
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                <span style={{ fontSize: 20 }}>📋</span>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: 14, color: "#c4b5fd" }}>Ghi chú & yêu cầu cho AI</h4>
+                  <p style={{ margin: 0, fontSize: 11, color: "#64748b" }}>Thêm context về sản phẩm, yêu cầu đặc biệt — AI sẽ dựa vào đây để phân tích chính xác hơn</p>
+                </div>
+              </div>
+              <textarea className="inp" value={userNotes} onChange={(e) => setUserNotes(e.target.value)} rows={3} placeholder={"VD:\n• Sản phẩm này là hat custom tên, thay \"CUSTOM TEXT\" thành \"JOHNSON\"\n• Service years thay thành 1975-2003\n• Target: Navy veterans, tone nghiêm trang\n• Banner style: premium, dark navy, gold accents\n• Model nên mặc thêm polo shirt navy blue"} style={{ fontSize: 12, lineHeight: 1.5 }} />
+              {userNotes && <div style={{ marginTop: 4, fontSize: 10, color: "#6ee7b7" }}>✓ AI sẽ đọc ghi chú này khi phân tích</div>}
+            </div>
+          )}
+
           {/* AI ANALYZE */}
           {imgs.length > 0 && (
             <div className="card" style={{ border: "1px solid rgba(168,139,250,.3)", background: "rgba(124,58,237,.04)" }}>
@@ -501,7 +534,7 @@ export default function App() {
                 <span style={{ fontSize: 22 }}>🧠</span>
                 <div>
                   <h4 style={{ margin: 0, fontSize: 14, color: "#c4b5fd" }}>AI Product Analyzer</h4>
-                  <p style={{ margin: 0, fontSize: 11, color: "#64748b" }}>Gemini phân tích ảnh → tự động gợi ý prompt, nội dung, scene phù hợp</p>
+                  <p style={{ margin: 0, fontSize: 11, color: "#64748b" }}>Gemini phân tích ảnh {userNotes ? "+ ghi chú của bạn" : ""} → tự điền prompt, nội dung, scene</p>
                 </div>
               </div>
 
@@ -529,6 +562,13 @@ export default function App() {
                     <div><span style={{ color: "#64748b" }}>Màu:</span> <span style={{ color: "#e2e8f0" }}>{analyzeResult.productColor}</span></div>
                     <div><span style={{ color: "#64748b" }}>Audience:</span> <span style={{ color: "#e2e8f0" }}>{analyzeResult.targetAudience}</span></div>
                   </div>
+                  {analyzeResult.customTextReplaced && (analyzeResult.customTextReplaced.originalText || analyzeResult.customTextReplaced.originalYears) && (
+                    <div style={{ marginTop: 6, padding: "6px 10px", borderRadius: 6, background: "rgba(110,231,183,.08)", border: "1px solid rgba(110,231,183,.2)", fontSize: 11 }}>
+                      <span style={{ color: "#6ee7b7", fontWeight: 600 }}>📝 Custom text replaced:</span>
+                      {analyzeResult.customTextReplaced.originalText && <span style={{ color: "#94a3b8" }}> "{analyzeResult.customTextReplaced.originalText}" → <span style={{ color: "#e2e8f0" }}>"{analyzeResult.customTextReplaced.replacedWith}"</span></span>}
+                      {analyzeResult.customTextReplaced.originalYears && <span style={{ color: "#94a3b8" }}> · "{analyzeResult.customTextReplaced.originalYears}" → <span style={{ color: "#e2e8f0" }}>"{analyzeResult.customTextReplaced.replacedYears}"</span></span>}
+                    </div>
+                  )}
                   <div style={{ marginTop: 6, fontSize: 11, color: "#64748b" }}>
                     Mockup scenes: {analyzeResult.suggestedScenes?.join(", ")}
                   </div>
