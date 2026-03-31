@@ -1,4 +1,3 @@
-cat > ~/vettailor-mockup-app/src/App.jsx << 'ENDOFFILE'
 ```
 
 import { useState, useRef, useCallback, useEffect } from "react";
