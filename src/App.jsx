@@ -375,6 +375,7 @@ export default function App() {
   const [bannerBranch, setBannerBranch] = useState("");
   const [showPrompt, setShowPrompt] = useState(false);
   const [previewStyleId, setPreviewStyleId] = useState(null);
+  const [promptOverrides, setPromptOverrides] = useState({}); // { styleId: "edited prompt" }
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeResult, setAnalyzeResult] = useState(null);
   const [genCount, setGenCount] = useState(1);
@@ -466,9 +467,9 @@ export default function App() {
       // Delay between tasks (except first batch)
       if (idx >= concurrency) await new Promise(r => setTimeout(r, delay * 1000));
       const styleObj = allStyles.find(s => s.id === item.styleId);
-      const prompt = bannerMode
+      const prompt = promptOverrides[item.styleId] || (bannerMode
         ? buildBannerPrompt(styleObj, productDesc || "veteran-themed product", sizeInfo, { headline: bannerHeadline, cta: bannerCta, offer: bannerOffer, branch: bannerBranch })
-        : buildMockupPrompt(styleObj, productDesc || "veteran-themed product", sizeInfo);
+        : buildMockupPrompt(styleObj, productDesc || "veteran-themed product", sizeInfo));
       return await genImage(plat, key, model, item.img.b64, item.img.mime, prompt, ctrl.signal, apiSize);
     });
 
@@ -604,7 +605,14 @@ export default function App() {
                   return <button key={id} className={`btn btn-s`} onClick={() => setPreviewStyleId(id)} style={{ fontSize: 10, background: previewStyleId === id ? "rgba(124,58,237,.2)" : undefined, borderColor: previewStyleId === id ? "#7c3aed" : undefined }}>{s?.icon} {s?.label}</button>;
                 })}
               </div>
-              {previewStyleId && (<div><p style={{ fontSize: 10, color: "#64748b", marginBottom: 4 }}>Random mỗi lần gen — đây là 1 sample:</p><textarea className="inp" readOnly value={getPromptForStyle(previewStyleId)} rows={8} style={{ fontSize: 11, lineHeight: 1.5, fontFamily: "Consolas, monospace" }} /><button className="btn btn-s" onClick={() => navigator.clipboard.writeText(getPromptForStyle(previewStyleId))} style={{ fontSize: 10, marginTop: 4 }}>📋 Copy</button></div>)}
+              {previewStyleId && (<div>
+                <p style={{ fontSize: 10, color: "#64748b", marginBottom: 4 }}>{promptOverrides[previewStyleId] ? "✏️ Custom prompt (cố định, không random)" : "🎲 Random mỗi lần gen — sửa để override:"}</p>
+                <textarea className="inp" value={promptOverrides[previewStyleId] || getPromptForStyle(previewStyleId)} onChange={e => setPromptOverrides(p => ({ ...p, [previewStyleId]: e.target.value }))} rows={8} style={{ fontSize: 11, lineHeight: 1.5, fontFamily: "Consolas, monospace" }} />
+                <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
+                  {promptOverrides[previewStyleId] && <button className="btn btn-s" onClick={() => setPromptOverrides(p => { const n = { ...p }; delete n[previewStyleId]; return n; })} style={{ fontSize: 10 }}>🔄 Reset random</button>}
+                  <button className="btn btn-s" onClick={() => navigator.clipboard.writeText(promptOverrides[previewStyleId] || getPromptForStyle(previewStyleId))} style={{ fontSize: 10 }}>📋 Copy</button>
+                </div>
+              </div>)}
             </div>)}
           </div>
 
