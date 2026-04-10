@@ -24,13 +24,28 @@ const OUTPUT_SIZES = [
 
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
+// Shuffle-based picker: tracks used items per category to avoid repeats
+const _usedMap = {};
+function pickUnique(arr, category) {
+  const key = category || arr.join("|").slice(0, 50);
+  if (!_usedMap[key] || _usedMap[key].length >= arr.length) {
+    // Reshuffle when all options used
+    _usedMap[key] = [];
+  }
+  const remaining = arr.filter(x => !_usedMap[key].includes(x));
+  const chosen = remaining[Math.floor(Math.random() * remaining.length)];
+  _usedMap[key].push(chosen);
+  return chosen;
+}
+function resetPicker() { Object.keys(_usedMap).forEach(k => delete _usedMap[k]); }
+
 // ════════════════════════════════════════════════════════════
 // PRODUCT FIDELITY RULES (đặt ĐẦU TIÊN trong mọi prompt)
 // ════════════════════════════════════════════════════════════
 
-const FIDELITY_RULES = `MOST IMPORTANT RULE — PRODUCT FIDELITY: The product from the reference image must be reproduced with 100% accuracy. Every color, pattern, text, emblem, stitch, and detail on the product must match the reference exactly. Do NOT alter, recolor, redesign, or simplify any part of the product. Do NOT crop or cut off any part of the product.`;
+const FIDELITY_RULES = `RULE: Reproduce the product from reference with 100% accuracy — every color, pattern, text, emblem must match exactly. Never alter, crop, or simplify the product.`;
 
-const NEGATIVE_RULES = `ABSOLUTE PROHIBITIONS — NEVER do any of these: Never add any text, words, letters, watermarks, logos, URLs, or brand names that are not on the original product. Never add labels like "Headline:", "CTA:", "Text Rules:" or any instruction text. Never add emoji overlays. Never change the product design in any way. Never make the product blurry or low quality.`;
+const NEGATIVE_RULES = `NEVER: add text/watermarks/logos/URLs not on original product. Never display instruction labels. Never change product design.`;
 
 // ════════════════════════════════════════════════════════════
 // 10 MOCKUP STYLES (restructured: fidelity first, on-model for hats)
@@ -122,15 +137,11 @@ const MOCKUP_STYLES = [
 function buildMockupPrompt(style, productDesc, sizeInfo) {
   const v = style.variations;
   const sceneParts = [];
-  Object.keys(v).forEach(k => sceneParts.push(pick(v[k])));
+  Object.keys(v).forEach(k => sceneParts.push(pickUnique(v[k], `mock_${style.id}_${k}`)));
   return [
     FIDELITY_RULES,
-    "",
     `SCENE: ${style.core}. ${sceneParts.join(". ")}.`,
-    "",
-    `OUTPUT: Photorealistic product photography, 8K quality, sharp focus. Aspect ratio ${sizeInfo.ratio} (${sizeInfo.px}).`,
-    `PRODUCT: ${productDesc}.`,
-    "",
+    `Photorealistic, sharp focus, ${sizeInfo.ratio} (${sizeInfo.px}). Product: ${productDesc}.`,
     NEGATIVE_RULES
   ].join("\n");
 }
@@ -244,7 +255,7 @@ function buildBannerPrompt(style, productDesc, sizeInfo, opts = {}) {
   const { headline, cta, offer, branch } = opts;
   const v = style.variations;
   const sceneParts = [];
-  Object.keys(v).forEach(k => sceneParts.push(pick(v[k])));
+  Object.keys(v).forEach(k => sceneParts.push(pickUnique(v[k], `ban_${style.id}_${k}`)));
 
   const textInstructions = [];
   if (headline) textInstructions.push(`Display this exact headline text on the banner: "${headline}"`);
@@ -255,20 +266,12 @@ function buildBannerPrompt(style, productDesc, sizeInfo, opts = {}) {
 
   return [
     FIDELITY_RULES,
-    "",
     `SCENE: ${style.core}. ${sceneParts.join(". ")}.`,
-    "",
-    `TEXT ON THE BANNER: ${style.textGuidance}`,
-    "",
-    textInstructions.join("\n"),
-    "",
-    `CRITICAL TEXT RULES: All displayed text must be spelled correctly and large enough to read at a glance. Text must have sufficient contrast against its background. Do NOT overlap text on top of the product design. Use professional clean typesetting.`,
-    "",
-    `OUTPUT: High quality advertisement image. Aspect ratio ${sizeInfo.ratio} (${sizeInfo.px}).`,
-    `PRODUCT: ${productDesc}.`,
-    "",
-    NEGATIVE_RULES,
-    `Additional text prohibition: NEVER display the words "Headline", "CTA", "Text Rules", "Output", "Product", or any formatting instruction. Only display the actual headline, call-to-action, and offer text content.`
+    `TEXT: ${style.textGuidance}`,
+    textInstructions.join(" "),
+    `Text must be spelled correctly, readable at glance, high contrast, not overlapping product. Never display instruction labels like "Headline:" or "CTA:".`,
+    `${sizeInfo.ratio} (${sizeInfo.px}). Product: ${productDesc}.`,
+    NEGATIVE_RULES
   ].join("\n");
 }
 
@@ -490,6 +493,7 @@ export default function App() {
     if (!key) return log("Chưa nhập API Key!", "error");
     if (!imgs.length) return log("Chưa upload ảnh!", "error");
     if (!selStyles.length) return log("Chưa chọn style!", "error");
+    resetPicker(); // Reset shuffle tracker for fresh variations
 
     const q = [];
     imgs.forEach(img => {
