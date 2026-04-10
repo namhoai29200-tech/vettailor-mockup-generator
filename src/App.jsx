@@ -7,8 +7,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 const PLATFORMS = {
   gemini: { id: "gemini", label: "Google Gemini", icon: "✦", color: "#4285f4", keyPlaceholder: "AIzaSy...", keyHelp: "Free tại aistudio.google.com", keyLink: "https://aistudio.google.com",
     models: [{ id: "gemini-2.5-flash-image", label: "Nano Banana", detail: "Free ~500/day", tier: "free" }, { id: "gemini-3.1-flash-image-preview", label: "Nano Banana 2", detail: "Free · Mới nhất", tier: "free" }, { id: "gemini-3-pro-image-preview", label: "Nano Banana Pro", detail: "$0.134/img", tier: "paid" }] },
-  openai: { id: "openai", label: "OpenAI GPT Image", icon: "◎", color: "#10a37f", keyPlaceholder: "sk-...", keyHelp: "Lấy tại platform.openai.com", keyLink: "https://platform.openai.com/api-keys",
-    models: [{ id: "gpt-image-1", label: "GPT Image 1", detail: "$0.02-0.19/img", tier: "paid" }, { id: "gpt-image-1-mini", label: "GPT Image 1 Mini", detail: "Rẻ hơn 50-70%", tier: "paid" }] },
+  openai: { id: "openai", label: "OpenAI DALL-E", icon: "◎", color: "#10a37f", keyPlaceholder: "sk-...", keyHelp: "Lấy tại platform.openai.com", keyLink: "https://platform.openai.com/api-keys",
+    models: [{ id: "dall-e-3", label: "DALL-E 3", detail: "$0.04-0.12/img", tier: "paid" }, { id: "dall-e-2", label: "DALL-E 2", detail: "$0.02/img", tier: "paid" }] },
 };
 
 // ════════════════════════════════════════════════════════════
@@ -16,231 +16,260 @@ const PLATFORMS = {
 // ════════════════════════════════════════════════════════════
 
 const OUTPUT_SIZES = [
-  { id: "landscape", label: "Landscape 1.91:1 — 1920×1080", px: "1920×1080", ratio: "1.91:1", apiGemini: "1536x1024", apiOpenai: "1536x1024" },
+  { id: "landscape", label: "Landscape 1.91:1 — 1920×1080", px: "1920×1080", ratio: "1.91:1", apiGemini: "1536x1024", apiOpenai: "1792x1024" },
   { id: "square", label: "Square 1:1 — 1200×1200", px: "1200×1200", ratio: "1:1", apiGemini: "1024x1024", apiOpenai: "1024x1024" },
-  { id: "portrait", label: "Portrait 4:5 — 960×1200", px: "960×1200", ratio: "4:5", apiGemini: "1024x1536", apiOpenai: "1024x1536" },
-  { id: "vertical", label: "Vertical 4:5 — 1080×1350", px: "1080×1350", ratio: "4:5", apiGemini: "1024x1536", apiOpenai: "1024x1536" },
+  { id: "portrait", label: "Portrait 4:5 — 960×1200", px: "960×1200", ratio: "4:5", apiGemini: "1024x1536", apiOpenai: "1024x1792" },
+  { id: "vertical", label: "Vertical 4:5 — 1080×1350", px: "1080×1350", ratio: "4:5", apiGemini: "1024x1536", apiOpenai: "1024x1792" },
 ];
 
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
 // ════════════════════════════════════════════════════════════
-// 10 MOCKUP STYLES
+// PRODUCT FIDELITY RULES (đặt ĐẦU TIÊN trong mọi prompt)
+// ════════════════════════════════════════════════════════════
+
+const FIDELITY_RULES = `MOST IMPORTANT RULE — PRODUCT FIDELITY: The product from the reference image must be reproduced with 100% accuracy. Every color, pattern, text, emblem, stitch, and detail on the product must match the reference exactly. Do NOT alter, recolor, redesign, or simplify any part of the product. Do NOT crop or cut off any part of the product.`;
+
+const NEGATIVE_RULES = `ABSOLUTE PROHIBITIONS — NEVER do any of these: Never add any text, words, letters, watermarks, logos, URLs, or brand names that are not on the original product. Never add labels like "Headline:", "CTA:", "Text Rules:" or any instruction text. Never add emoji overlays. Never change the product design in any way. Never make the product blurry or low quality.`;
+
+// ════════════════════════════════════════════════════════════
+// 10 MOCKUP STYLES (restructured: fidelity first, on-model for hats)
 // ════════════════════════════════════════════════════════════
 
 const MOCKUP_STYLES = [
-  { id: "clean_studio", label: "Clean Studio", icon: "⬜", desc: "E-commerce, PMax, product page", purpose: "Google Shopping, PMax",
-    core: "Professional e-commerce product photography, clean minimal background, soft studio lighting, subtle shadow, product centered, high-end catalog feel, crisp and sharp focus, commercial product shot",
+  { id: "clean_studio", label: "Clean Studio", icon: "⬜", desc: "E-commerce, PMax, product page", purpose: "Google Shopping, PMax, product page",
+    core: "Professional e-commerce product photography. The product is placed on a clean hat stand or mannequin head (for hats) or invisible mannequin (for apparel). Clean minimal background, soft studio lighting, subtle shadow, centered composition, high-end catalog feel, crisp sharp focus",
     variations: {
       background: ["pure white seamless backdrop", "light gray gradient backdrop", "warm beige seamless surface", "soft cream background", "pale blue-gray studio backdrop"],
-      shadow: ["soft diffused drop shadow beneath product", "subtle mirror-like reflection on glossy surface", "floating feel with no visible shadow", "contact shadow only where product meets surface"],
-      light: ["soft even studio lighting from all sides", "slight left key light with gentle fill on right", "slight right key light with gentle fill on left", "overhead diffused softbox creating even illumination", "back-lit with soft fill light creating subtle rim glow"],
-      surface: ["seamless infinity curve paper", "faint woven fabric texture beneath product", "smooth matte acrylic surface", "subtle warm-to-cool gradient floor", "clean white elevated platform"]
+      shadow: ["soft diffused drop shadow beneath product", "subtle mirror-like reflection on glossy surface", "floating feel with minimal shadow", "contact shadow only where product meets surface"],
+      light: ["soft even studio lighting from all sides", "slight left key light with gentle fill on right", "overhead diffused softbox creating even illumination", "back-lit with soft fill light creating subtle rim glow"],
+      surface: ["seamless infinity curve paper", "smooth matte acrylic surface", "subtle warm-to-cool gradient floor", "clean white elevated platform"]
     }},
-  { id: "dark_premium", label: "Dark Premium", icon: "🖤", desc: "Dramatic, luxury, scroll-stopping", purpose: "Meta Feed, jacket & hat",
-    core: "Dramatic low-key product photography, dark moody background, cinematic rim lighting, premium luxury feel, subtle texture in background, high contrast, editorial product shot",
+  { id: "dark_premium", label: "Dark Premium", icon: "🖤", desc: "Dramatic, luxury, scroll-stopping", purpose: "Meta Feed, jacket & hat focus",
+    core: "Dramatic low-key product photography. Product placed on dark hat stand or mannequin head (for hats) or displayed on invisible mannequin (for apparel). Dark moody background, cinematic rim lighting, premium luxury feel, high contrast, editorial product shot",
     variations: {
-      background: ["dark wood grain surface with visible knots", "polished black stone slate with subtle veining", "brushed dark gunmetal surface", "weathered dark leather with natural patina", "concrete surface with dark charcoal wash", "subtle smoke and haze drifting on black void"],
+      background: ["dark wood grain surface with visible knots", "polished black stone slate with subtle veining", "brushed dark gunmetal surface", "weathered dark leather with natural patina", "concrete surface with dark charcoal wash"],
       light: ["warm amber rim light glowing from left side", "cold blue rim light cutting from right side", "dual-side rim lighting warm left and cool right", "single overhead spot with dramatic fall-off into darkness", "golden backlight creating halo with dark fill on front"],
-      tone: ["warm amber and gold tones throughout", "cool steel blue monochromatic tones", "neutral deep blacks with minimal color cast", "moody teal undertone in shadows", "rich burgundy accent light bleeding into edges"],
+      tone: ["warm amber and gold tones throughout", "cool steel blue monochromatic tones", "neutral deep blacks with minimal color cast", "rich burgundy accent light bleeding into edges"],
       atmosphere: ["clean dark void with deep blacks", "subtle smoke wisps curling through light beam", "fine dust particles floating in visible light beam", "deep dark vignette framing product in center"]
     }},
-  { id: "patriotic_outdoor", label: "Patriotic Outdoor", icon: "🇺🇸", desc: "Veteran pride, emotional, warm", purpose: "Meta Ads, emotional",
-    core: "American patriotic lifestyle setting, warm golden hour natural light, outdoor environment, proud authentic veteran atmosphere, subtle American elements in scene, natural and genuine feel, aspirational yet relatable",
+  { id: "patriotic_outdoor", label: "Patriotic Outdoor", icon: "🇺🇸", desc: "Veteran pride, emotional, warm", purpose: "Meta Ads, emotional engagement",
+    core: "American patriotic lifestyle photograph. A proud middle-aged American veteran man wearing the product (hat on his head, or apparel on his body). Golden hour warm natural outdoor light. The veteran looks confident and relaxed. Focus on the product while showing the patriotic American setting behind him",
     variations: {
-      scene: ["backyard with weathered wooden fence and green lawn", "front porch of classic American home with columns", "open country field with tall grass at sunset", "peaceful lakeside wooden dock", "park bench under a massive old oak tree", "quiet rural country dirt road stretching into distance", "tailgate of a classic American pickup truck", "red barn farmhouse setting with rolling hills", "small town Main Street with American storefronts"],
-      time: ["golden hour warm side light with long shadows", "soft early morning light with gentle dew", "bright midday sun with open shade under tree", "late afternoon warm amber glow", "overcast sky providing soft even diffused light"],
-      elements: ["American flag partially visible waving gently in background", "red-white-blue bunting draped on railing or fence", "vintage pickup truck parked nearby in background", "wooden fence with small American flag bunting", "classic mailbox with small American flag attached"],
-      season: ["lush summer green with full foliage", "warm autumn colors with orange and red leaves", "spring bloom with flowers and fresh green", "mild winter with bare trees and cool light"]
+      scene: ["standing in his backyard with a weathered wooden fence and green lawn behind him", "sitting relaxed on the front porch of a classic American home", "standing in an open country field with tall grass at golden sunset", "leaning against a classic American pickup truck", "standing proudly on a quiet rural country road"],
+      time: ["golden hour warm side light with long shadows", "soft early morning light with gentle warmth", "late afternoon warm amber glow", "overcast sky providing soft even diffused light"],
+      elements: ["American flag partially visible in the background", "vintage pickup truck parked nearby", "wooden fence with natural surroundings"],
+      pose: ["looking slightly to the side with a confident calm expression", "arms crossed standing tall and proud", "casual relaxed posture with hands in pockets", "slight smile looking toward camera"]
     }},
-  { id: "rugged_tactical", label: "Rugged Tactical", icon: "🔧", desc: "Military, gritty, masculine", purpose: "Bomber & leather jacket",
-    core: "Rugged military-inspired setting, gritty textured environment, strong masculine tone, industrial or tactical backdrop, muted earth tones, authentic and worn-in feel, utilitarian aesthetic",
+  { id: "rugged_tactical", label: "Rugged Tactical", icon: "🔧", desc: "Military, gritty, masculine", purpose: "Bomber & leather jacket focus",
+    core: "Rugged military-inspired photograph. A tough veteran man wearing the product in a gritty industrial or tactical environment. Strong masculine energy, muted earth tones, authentic worn-in feel. The man looks like a real veteran — weathered, strong, confident. Product is clearly visible and in sharp focus",
     variations: {
-      setting: ["mechanic garage with tools hanging on pegboard wall", "military surplus store interior with shelves of gear", "industrial workshop with heavy workbench and vise", "old aircraft hangar with corrugated metal walls", "army barracks style room with metal bunks", "olive green Jeep or military vehicle parked nearby", "metal warehouse with wooden shipping crates"],
-      props: ["metal dog tags hanging from a nail or hook", "worn combat boots placed on floor nearby", "military patches and insignia laid on table", "folded American flag in triangle display case", "tool wall with wrenches and equipment in background", "old military maps pinned to wall", "vintage olive drab military radio on shelf"],
-      texture: ["raw poured concrete floor and walls", "rusted corroded metal surfaces and fixtures", "worn weathered wooden planks and beams", "rough canvas and burlap material elements", "corrugated galvanized steel wall panels", "riveted heavy metal industrial panels"],
-      color: ["olive drab green and desert tan palette", "gunmetal gray and orange rust tones", "dark earth brown and sandy khaki", "military forest green and chocolate brown", "faded desert camouflage muted tones"]
+      setting: ["standing in a mechanic garage with tools on the wall behind him", "inside an old aircraft hangar with corrugated metal walls", "in an industrial workshop with a heavy workbench", "next to an olive green military vehicle", "in a metal warehouse with wooden shipping crates"],
+      props: ["metal dog tags visible around his neck", "worn combat boots on his feet", "military patches visible in background"],
+      texture: ["raw concrete floor and walls in background", "rusted metal surfaces and fixtures nearby", "worn weathered wooden planks and beams", "corrugated galvanized steel wall panels"],
+      color: ["olive drab green and desert tan palette", "gunmetal gray and rust tones", "dark earth brown and sandy khaki", "military forest green and chocolate brown"]
     }},
   { id: "everyday_casual", label: "Everyday Casual", icon: "☕", desc: "Relatable, approachable, real life", purpose: "Retargeting, broad audience",
-    core: "Casual everyday American lifestyle, relaxed natural setting, soft ambient light, approachable and comfortable mood, real-life context, candid and authentic feel, warm and inviting atmosphere",
+    core: "Casual everyday American lifestyle photograph. A friendly veteran man wearing the product in a normal everyday setting. Relaxed natural feel, soft ambient light, approachable and comfortable. He looks like a real person in his daily life — not posing, just being himself. Product clearly visible",
     variations: {
-      scene: ["cozy coffee shop table by large window", "comfortable living room couch area with throw pillows", "kitchen counter with morning coffee and sunlight", "walking casually through suburban neighborhood sidewalk", "sitting relaxed on front steps of house", "classic local diner booth with red vinyl seats", "home office desk with computer and coffee mug", "backyard wooden deck with lounge chair"],
-      activity: ["morning coffee moment with steam rising from mug", "reading newspaper or scrolling phone casually", "casual relaxed conversation setting with friend", "laid-back Saturday weekend vibe at home", "running errands look carrying grocery bag"],
-      light: ["warm indoor ambient tungsten light", "natural window side light streaming in", "soft overhead interior ceiling lighting", "natural bright daylight from open doorway", "mixed warm indoor lamps and cool window daylight"],
-      mood: ["cozy warm and deeply relaxed atmosphere", "quietly confident everyday moment", "laid-back casual weekend afternoon feeling", "calm peaceful morning routine energy"]
+      scene: ["sitting in a cozy coffee shop by a large window with a mug", "relaxing on a comfortable couch at home", "walking casually on a suburban neighborhood sidewalk", "sitting on front steps of his house", "in a home office at his desk"],
+      activity: ["enjoying a morning coffee moment", "casually scrolling his phone and relaxing", "having a laid-back Saturday at home", "chatting with a friend at a local spot"],
+      light: ["warm indoor ambient light", "natural window side light streaming in", "natural bright daylight from open doorway", "mixed warm indoor lamps and cool window daylight"],
+      mood: ["cozy warm and relaxed atmosphere", "quietly confident everyday moment", "laid-back casual weekend feeling", "calm peaceful morning routine energy"]
     }},
   { id: "brotherhood", label: "Brotherhood / Group", icon: "🤝", desc: "Veteran community, camaraderie", purpose: "Meta, community engagement",
-    core: "Veterans brotherhood gathering, multiple people wearing themed gear together, camaraderie and pride, warm authentic group moment, genuine connection and shared bond, storytelling composition",
+    core: "Veterans brotherhood photograph. A group of veteran friends together, with the main veteran prominently wearing the product. Warm authentic group moment showing genuine connection, laughter, and shared bond. The product on the main veteran is clearly visible and in focus. Candid storytelling feel",
     variations: {
-      scene: ["lively backyard BBQ party with smoke from grill", "veteran reunion event with banner and decorations", "local bar gathering with wood interior and dim lighting", "fishing trip together by calm lake with rods", "tailgate party before a football game with coolers", "VFW hall meeting room with memorabilia on walls", "camping trip around crackling campfire at night"],
-      dynamic: ["laughing together naturally at shared joke", "raising glasses toasting drinks with big smiles", "standing shoulder-to-shoulder proudly arms crossed", "sharing a hearty meal at long table together", "watching the big game together cheering on TV", "casual group photo pose with arms around shoulders"],
-      groupSize: ["two close buddies standing side by side", "small tight group of 3-4 veteran friends", "full band of brothers gathering of 5-6 guys"],
-      atmosphere: ["celebratory high-energy party fun", "nostalgic warm bonding and old stories", "proud strong silent respect together", "relaxed casual easy friendship laughter"]
+      scene: ["at a lively backyard BBQ with smoke from the grill", "at a veteran reunion gathering", "at a local bar with wood interior", "fishing together by a calm lake", "at a tailgate party before a football game"],
+      dynamic: ["laughing together naturally at a shared joke", "raising glasses toasting with big smiles", "standing shoulder-to-shoulder proudly", "sharing a hearty meal at a long table", "casual group photo with arms around shoulders"],
+      groupSize: ["two close buddies standing side by side", "small tight group of 3-4 veteran friends", "band of brothers gathering of 5-6"],
+      atmosphere: ["celebratory high-energy fun", "nostalgic warm bonding", "proud strong silent respect", "relaxed easy friendship and laughter"]
     }},
   { id: "seasonal_holiday", label: "Seasonal / Holiday", icon: "🎆", desc: "Memorial Day, Veterans Day, 4th of July", purpose: "Holiday campaigns",
-    core: "Festive American holiday atmosphere, seasonal decorations and colors, celebratory yet respectful mood, themed environment that honors veterans, seasonal warmth and pride",
+    core: "American holiday celebration photograph. A veteran man wearing the product at a festive American holiday gathering. The holiday atmosphere is clear but not overwhelming — the product remains the star. Warm celebratory yet respectful mood",
     variations: {
-      holiday: ["4th of July celebration with fireworks in sky and red-white-blue bunting and sparklers", "Memorial Day scene with red poppies and American flags on graves and solemn pride", "Veterans Day ceremony with Thank You For Your Service signs and salute and honor guard", "Christmas setting with warm string lights and green wreath and fireplace glow and light snow", "Thanksgiving scene with family table and autumn harvest centerpiece and gratitude theme"],
-      setting: ["outdoor community celebration with bunting and decorations", "home beautifully decorated for the holiday inside and out", "community gathering event with crowd and festivities", "intimate family gathering indoors with holiday decor"],
-      palette: ["vibrant saturated red-white-blue patriotic colors", "muted respectful navy and cream with subtle flag accents", "warm Christmas red-green-gold with rustic military accent", "rich autumn orange-brown-cream harvest warm tones"],
-      mood: ["loud celebratory festive party energy", "solemn quiet honoring reverent atmosphere", "warm family-centered togetherness feeling", "deeply grateful reflective peaceful tone"]
+      holiday: ["4th of July with fireworks in the sky and red-white-blue bunting visible", "Memorial Day with American flags and a solemn proud atmosphere", "Veterans Day with a Thank You For Your Service vibe", "Christmas with warm string lights and a cozy fireplace glow", "Thanksgiving with family and autumn warmth"],
+      setting: ["outdoor community celebration with decorations", "home decorated for the holiday", "intimate family gathering indoors"],
+      palette: ["vibrant red-white-blue patriotic colors", "muted respectful navy and cream", "warm Christmas red-green-gold", "rich autumn orange-brown-cream"],
+      mood: ["celebratory festive energy", "solemn quiet honoring atmosphere", "warm family togetherness", "grateful reflective peaceful tone"]
     }},
   { id: "flat_lay", label: "Flat Lay Arrangement", icon: "📐", desc: "Overhead styled, Instagram aesthetic", purpose: "Bundle shot, Instagram, upsell",
-    core: "Overhead flat lay product arrangement, styled with complementary accessories, organized aesthetic layout, clean surface background, editorial styling, curated collection feel, top-down photography",
+    core: "Overhead flat lay product arrangement, photographed from DIRECTLY above looking straight down. The product is laid completely flat on the surface. Styled with 2-3 small complementary veteran accessories around it. Clean organized aesthetic layout, editorial styling. Everything must appear naturally flat as seen from a perfect top-down bird-eye camera angle",
     variations: {
-      surface: ["light natural oak wood table with visible grain", "dark rich walnut surface polished", "raw concrete slab with texture", "white marble surface with subtle gray veining", "worn vintage leather desk surface with patina", "military olive drab canvas fabric laid flat", "rustic reclaimed barnwood planks"],
-      accessories: ["classic aviator sunglasses and vintage wristwatch placed nearby", "metal dog tags on chain and worn leather wallet", "embroidered American flag patch and folding pocket knife", "ceramic coffee mug with dark brew and brass vintage compass", "military challenge coin collection and old black-and-white photographs", "brass Zippo lighter with patina and worn leather-bound journal"],
-      layout: ["clean symmetrical grid arrangement perfectly aligned", "casual naturally scattered organic layout", "dynamic diagonal arrangement with visual flow", "centered hero product with smaller items radiating outward", "minimal arrangement with generous negative space around product"],
-      detail: ["fresh hot coffee with visible steam wisps rising", "corner of morning newspaper peeking in", "small potted plant or greenery accent adding life", "warm angled side lighting creating long editorial shadows"]
+      surface: ["light natural oak wood table", "dark rich walnut surface", "raw concrete slab", "white marble with subtle gray veining", "military olive drab canvas fabric"],
+      accessories: ["classic aviator sunglasses and a vintage wristwatch", "metal dog tags on chain and a worn leather wallet", "a ceramic coffee mug and a brass compass", "a brass Zippo lighter and a worn leather journal"],
+      layout: ["clean symmetrical grid arrangement", "casual naturally scattered organic layout", "centered hero product with smaller items around it", "minimal arrangement with generous negative space"],
+      detail: ["warm angled side lighting creating long editorial shadows", "soft even overhead light with minimal shadows", "natural daylight from a nearby window casting gentle shadows"]
     }},
-  { id: "urban_veteran", label: "Urban Veteran", icon: "🏙️", desc: "City street, modern, cool", purpose: "Younger veteran audience",
-    core: "Urban American street setting, modern city environment, confident streetwear energy mixed with veteran pride, contemporary and cool, natural daylight, editorial street photography feel",
+  { id: "urban_veteran", label: "Urban Veteran", icon: "🏙️", desc: "City street, modern, cool", purpose: "Younger veteran audience, modern appeal",
+    core: "Urban street style photograph. A cool confident younger veteran man wearing the product on a modern American city street. Streetwear energy mixed with veteran pride. Natural daylight, editorial street photography feel. He looks effortlessly cool. Product is clearly visible and sharp",
     variations: {
-      setting: ["busy downtown sidewalk with pedestrians blurred", "textured brick wall alley with fire escape above", "colorful large city mural graffiti backdrop", "concrete parking structure rooftop with open sky", "retro local diner exterior with neon signs glowing", "classic barber shop storefront with striped pole", "rooftop terrace with dramatic city skyline view"],
-      vibe: ["gritty raw downtown energy with character", "clean well-maintained suburban main street feel", "converted industrial district with creative energy", "hip trendy neighborhood with coffee shops and boutiques", "waterfront boardwalk with ocean breeze atmosphere"],
-      light: ["harsh midday urban shadows with strong contrast", "golden hour light streaming between tall buildings", "flat overcast diffused city light even and soft", "colored neon accent glow from nearby storefront sign", "early morning fog creating diffused atmospheric city light"],
-      energy: ["walking with purpose and confidence on sidewalk", "leaning casually against brick or concrete wall", "standing at crosswalk with confident relaxed posture", "sitting on concrete steps with elbows on knees relaxed"]
+      setting: ["walking on a busy downtown sidewalk", "standing against a textured brick wall", "near colorful city mural or graffiti", "on a rooftop with city skyline behind him", "outside a retro diner with neon signs"],
+      vibe: ["gritty raw downtown energy", "hip trendy neighborhood feel", "converted industrial district", "waterfront boardwalk atmosphere"],
+      light: ["harsh midday urban shadows with strong contrast", "golden hour light streaming between buildings", "flat overcast diffused city light", "neon accent glow from a nearby sign"],
+      energy: ["walking with purpose and confidence", "leaning casually against a wall", "standing at a crosswalk with relaxed posture", "sitting on concrete steps elbows on knees"]
     }},
   { id: "heritage_vintage", label: "Heritage / Vintage", icon: "📷", desc: "Nostalgia, film look, timeless", purpose: "Storytelling, older audience",
-    core: "Vintage Americana aesthetic, nostalgic warm color grading, classic heritage feel, slightly faded film photography look, timeless military pride, retro authenticity, warm analog film tones",
+    core: "Vintage Americana photograph with nostalgic warm color grading. An older distinguished veteran man wearing the product in a classic American setting. Slightly faded film photography look, timeless military pride, warm analog film tones. The man embodies classic American veteran dignity",
     variations: {
-      setting: ["old-school barber shop interior with chrome chairs and mirrors", "vintage diner counter with chrome stools and neon menu", "classic restored American muscle car or old pickup truck", "cozy wood cabin interior with stone fireplace", "covered front porch with wooden rocking chair", "retro old gas station with vintage pumps and signage", "VFW lodge hall with flags and framed photos on walls"],
-      elements: ["old vacuum tube radio sitting on wooden shelf", "framed vintage black-and-white military photos on wall", "classic 1960s American car visible through window or door", "black rotary telephone on desk or table", "worn faded American flag hanging on wall", "glass display case with framed military medals and ribbons"],
-      filmLook: ["warm Kodak Portra 400 golden skin tones and soft contrast", "slightly desaturated image with warm glowing highlights", "deep golden sepia undertone throughout image", "Fuji film characteristic greens and muted blues", "washed out faded Polaroid instant photo feel"],
-      era: ["1950s classic Americana diner and drive-in nostalgia", "1960s military homecoming and Kennedy-era pride", "1970s road trip freedom and open highway aesthetic", "1980s heartland Americana warmth and optimism", "timeless era-ambiguous classic American heritage feel"]
+      setting: ["inside an old-school barber shop with chrome chairs", "at a vintage diner counter with chrome stools", "next to a classic restored American muscle car", "on a covered front porch in a wooden rocking chair", "at a VFW lodge hall with flags and photos on walls"],
+      elements: ["framed vintage black-and-white military photos on wall", "old vacuum tube radio on a wooden shelf", "a classic 1960s car visible in the scene"],
+      filmLook: ["warm Kodak Portra 400 golden skin tones", "slightly desaturated with warm glowing highlights", "deep golden sepia undertone", "washed out faded Polaroid feel"],
+      era: ["1950s classic Americana nostalgia", "1960s military homecoming pride", "1970s road trip freedom aesthetic", "timeless era-ambiguous American heritage"]
     }},
 ];
 
 function buildMockupPrompt(style, productDesc, sizeInfo) {
   const v = style.variations;
-  const parts = [style.core];
-  Object.keys(v).forEach(k => parts.push(pick(v[k])));
-  return `${parts.join(". ")}. Output aspect ratio: ${sizeInfo.ratio} (${sizeInfo.px}). Product: ${productDesc}. CRITICAL: The product design, colors, patterns, text, and ALL visual details must be preserved EXACTLY as shown in the reference image. Do NOT add any text, watermarks, logos not present in the original. Do NOT alter the product — only change surrounding environment.`;
+  const sceneParts = [];
+  Object.keys(v).forEach(k => sceneParts.push(pick(v[k])));
+  return [
+    FIDELITY_RULES,
+    "",
+    `SCENE: ${style.core}. ${sceneParts.join(". ")}.`,
+    "",
+    `OUTPUT: Photorealistic product photography, 8K quality, sharp focus. Aspect ratio ${sizeInfo.ratio} (${sizeInfo.px}).`,
+    `PRODUCT: ${productDesc}.`,
+    "",
+    NEGATIVE_RULES
+  ].join("\n");
 }
 
 // ════════════════════════════════════════════════════════════
-// 10 BANNER STYLES
+// 10 BANNER STYLES (restructured: no label rendering)
 // ════════════════════════════════════════════════════════════
 
 const BANNER_STYLES = [
   { id: "hero_clean", label: "Hero Product — Clean", icon: "⬜", desc: "Product-focused, professional", purpose: "Google Display, PMax",
-    core: "Clean professional product advertisement, product takes center stage occupying 60-70% of frame, minimal clean background, soft studio lighting, high-end commercial feel, plenty of breathing space, polished and sharp",
-    textRules: `HEADLINE: Short 3-6 words, bold clean sans-serif, dark or high-contrast. CTA: Clear button shape with strong contrast. LAYOUT: Product 60-70%, text opposite side. Text covers max 20% area. All text readable within 2 seconds.`,
+    core: "Clean professional product advertisement. Product takes center stage occupying 60-70% of the frame. Minimal clean background with soft studio lighting, high-end commercial feel, polished and sharp",
+    textGuidance: `Place a short bold headline (3-6 words) in a clean sans-serif font. Add a clear call-to-action button shape. Product fills 60-70% of the frame, text occupies the remaining space opposite the product. Keep total text area under 20%.`,
     variations: {
-      background: ["solid pure white", "light cool gray gradient", "soft warm cream-to-white gradient", "soft cool blue-to-white gradient", "subtle beige linen texture", "pale navy-to-white gradient"],
-      layout: ["product left 60% — text stacked right", "product right 60% — text stacked left", "product centered — headline above CTA below", "product centered — text below edge"],
-      textColor: ["dark charcoal on light bg", "white text on dark accent bar", "navy headline with gray subtext on white"],
-      cta: ["solid bright rounded button", "outlined dark button with arrow", "bold underlined text with arrow", "contrasting pill-shape CTA"],
-      accent: ["thin colored line divider", "subtle geometric shape behind product", "small Best Seller badge tag", "no accent — pure minimal"]
+      background: ["solid pure white", "light cool gray gradient", "soft warm cream-to-white gradient", "soft cool blue-to-white gradient", "pale navy-to-white gradient"],
+      layout: ["product left 60% with text stacked right", "product right 60% with text stacked left", "product centered with headline above and button below"],
+      textStyle: ["dark charcoal text on light background", "white text on a dark accent bar", "navy headline with gray subtext"],
+      accent: ["thin colored line divider", "subtle geometric shape behind product", "small badge or tag detail", "no accent — pure minimal"]
     }},
   { id: "dark_cinematic", label: "Dark Cinematic", icon: "🖤", desc: "Moody, premium, scroll-stopping", purpose: "Meta Feed, dark products",
-    core: "Dramatic dark cinematic advertisement, moody low-key lighting, dark rich background with subtle texture, premium luxury feel, high contrast, editorial and bold, product lit dramatically",
-    textRules: `HEADLINE: Bold uppercase or elegant serif, white or gold on dark. CTA: Bright prominent on dark — white or accent color. LAYOUT: Product dominant, text in dark negative space. MOOD: Powerful, premium. All text high contrast scannable in 2-3s.`,
+    core: "Dramatic dark cinematic advertisement. Moody low-key lighting, dark rich textured background, premium luxury feel, high contrast, product lit dramatically with rim lighting",
+    textGuidance: `Place a bold uppercase headline in white or gold on the dark background. Add a bright prominent call-to-action that stands out against the dark. Product is dominant with text placed in the dark negative space area.`,
     variations: {
-      background: ["rich dark wood grain", "polished black concrete", "brushed dark gunmetal steel", "aged dark leather with creases", "atmospheric smoke on black", "dark woven fabric texture", "deep charcoal gradient to black"],
-      lighting: ["warm amber rim light from left", "cold blue rim light from right", "backlit golden glow halo", "single overhead spotlight dramatic fall-off", "dual-side rim warm left cool right", "golden edge light tracing outline"],
-      textPlacement: ["text stacked bottom left", "headline top right CTA bottom right", "text centered with dark gradient overlay", "headline across top — product fills bottom"],
-      accentColor: ["warm rich gold", "cool polished silver", "deep warm amber", "deep crimson red", "ice cold blue", "pure white on black no color"],
-      typography: ["bold heavy industrial sans-serif", "elegant thin high-contrast serif", "military stencil rough textured", "tall condensed uppercase geometric"]
+      background: ["rich dark wood grain", "polished black concrete", "brushed dark gunmetal steel", "atmospheric smoke on black", "deep charcoal gradient to black"],
+      lighting: ["warm amber rim light from left", "cold blue rim light from right", "backlit golden glow halo", "single overhead spotlight with dramatic fall-off"],
+      textPlacement: ["text stacked bottom left", "headline top right with button bottom right", "text centered with dark gradient overlay"],
+      accentColor: ["warm rich gold", "cool polished silver", "deep crimson red", "pure white on black"],
+      typography: ["bold heavy sans-serif", "elegant thin serif", "military stencil textured", "tall condensed uppercase"]
     }},
   { id: "patriotic_lifestyle", label: "Patriotic Lifestyle", icon: "🇺🇸", desc: "Emotional, veteran pride", purpose: "Meta, emotional engagement",
-    core: "American patriotic lifestyle advertisement, warm golden natural light, authentic veteran atmosphere, outdoor or American home setting, proud and genuine mood, red-white-blue accents woven naturally",
-    textRules: `HEADLINE: Emotional pride copy 5-10 words, warm serif or sans-serif, white/cream for readability. CTA: Warm inviting not aggressive. LAYOUT: Lifestyle image 80%+, text on contrast area with dark overlay if needed. MOOD: Proud, authentic, warm.`,
+    core: "American patriotic lifestyle advertisement. Warm golden natural light, authentic veteran atmosphere, outdoor or American home setting, proud and genuine mood with red-white-blue accents visible naturally in the scene",
+    textGuidance: `Place a warm emotional headline (5-10 words about veteran pride) in white or cream for readability. Add a warm inviting call-to-action. The lifestyle image fills 80%+ of the frame. If text is over a busy area, use a semi-transparent dark overlay behind the text for contrast.`,
     variations: {
-      scene: ["backyard with American flag on pole", "front porch classic American home", "golden country road into sunset", "peaceful lakeside wooden dock", "tailgate of vintage pickup truck", "park with massive oak trees dappled sunlight", "red barn farmhouse golden hour", "small town Main Street with flags"],
-      timeLight: ["golden hour warm side light", "soft gentle morning light", "late afternoon warm amber glow", "overcast soft even light", "bright midday shade under tree"],
-      americanElements: ["American flag waving in breeze", "red-white-blue bunting on railing", "classic vintage pickup truck", "wooden fence with small flags", "classic mailbox with flag"],
-      textOverlay: ["semi-transparent dark bar behind text", "text on open sky with drop shadow", "gradient fade from image to dark panel with text", "text in natural dark shadow zone"],
-      headlineAngle: ["pride and honor statement", "brotherhood bond message", "sacrifice and service honor", "family legacy pride", "everyday hero celebration"]
+      scene: ["backyard with American flag on pole", "front porch classic American home", "golden country road into sunset", "tailgate of vintage pickup truck", "small town Main Street with flags"],
+      timeLight: ["golden hour warm side light", "soft gentle morning light", "late afternoon warm amber glow"],
+      americanElements: ["American flag waving in breeze", "red-white-blue bunting on railing", "classic vintage pickup truck"],
+      headlineAngle: ["a statement about pride and honor", "a brotherhood bond message", "a sacrifice and service tribute", "an everyday hero celebration"]
     }},
   { id: "bold_typography", label: "Bold Typography", icon: "🔤", desc: "Text is hero, product secondary", purpose: "Scroll-stopping Meta Feed",
-    core: "Typography-dominant advertisement, large bold text as PRIMARY element occupying 50-70% of banner, product shown smaller as secondary, strong graphic composition, extremely high contrast, designed to stop scroll with words",
-    textRules: `HEADLINE: MASSIVE 50-70% of banner. Extremely bold/heavy font. This IS the visual. CTA: Smaller but visible near product. LAYOUT: Text center of attention, product 20-30% in corner or edge. Max 6 words headline.`,
+    core: "Typography-dominant advertisement. Large bold text is THE main visual element occupying 50-70% of the banner. The product is shown smaller (20-30%) as secondary. Extremely high contrast, designed to stop scrolling with words",
+    textGuidance: `The headline text IS the visual — make it MASSIVE, filling 50-70% of the frame in an extremely bold heavy font. The product should be smaller in a corner. Maximum 6 words for the headline.`,
     variations: {
-      background: ["solid pure black", "solid deep navy", "solid army olive green", "dark textured concrete", "bold two-tone diagonal split", "solid bold red or orange"],
-      typography: ["ultra heavy bold sans-serif", "extremely tall condensed all-caps", "rough military stencil spray paint", "distressed worn texture on text", "clean modern geometric sans-serif", "bold editorial serif thick-thin contrast"],
-      layout: ["giant text centered — product small bottom right", "huge text left — product right edge", "text diagonal across entire banner", "text wrapping around product", "full bleed text — product overlapping"],
-      textColor: ["white on dark black", "cream on deep navy", "gold on black", "red on dark", "all white with ONE accent color word"],
-      headlineAngle: ["BUILT TO SERVE", "STAND YOUR GROUND", "VETERAN AND PROUD", "ONCE A SOLDIER ALWAYS", "HONOR YOUR SERVICE", "NEVER FORGOTTEN"]
+      background: ["solid pure black", "solid deep navy", "solid army olive green", "dark textured concrete", "bold two-tone diagonal split"],
+      typography: ["ultra heavy bold sans-serif", "extremely tall condensed all-caps", "rough military stencil style", "clean modern geometric sans-serif"],
+      layout: ["giant text centered with product small bottom right", "huge text left with product right edge", "text diagonal across entire banner"],
+      textColor: ["white on dark black", "cream on deep navy", "gold on black", "red on dark"],
+      headlineContent: ["BUILT TO SERVE", "STAND YOUR GROUND", "VETERAN AND PROUD", "HONOR YOUR SERVICE", "NEVER FORGOTTEN"]
     }},
   { id: "ugc_authentic", label: "UGC / Authentic", icon: "📱", desc: "Looks real, not like an ad", purpose: "Meta, outperforms polished",
-    core: "User-generated content style, looks like a real smartphone photo, slightly imperfect and casual, authentic and relatable, NOT designed or polished, natural phone photography feel, genuine and trustworthy",
-    textRules: `HEADLINE: Casual conversational, can use emoji, handwritten or casual font. CTA: Very gentle — "Check it out 👇", "Link in bio". LAYOUT: Natural unplanned photo, text added casually. IMPERFECTION IS KEY: slight tilt, natural lighting, real background.`,
+    core: "User-generated content style photo that looks like a real customer took it with their smartphone. Slightly imperfect and casual, authentic and relatable, NOT designed or polished. Natural phone photography feel. A real veteran proudly showing off the product in his natural environment",
+    textGuidance: `Add a casual conversational caption in a simple handwritten or casual font. Keep it short and authentic like a real person wrote it. Add a very subtle small call-to-action at the bottom. The photo should look natural and unplanned.`,
     variations: {
-      photoStyle: ["mirror selfie proudly showing off product", "casual outdoor candid photo", "close-up product held in hand", "messy natural flat lay on real table", "excited unboxing with shipping packaging", "wearing product doing everyday activity"],
-      textOverlay: ["casual handwritten font overlay", "iPhone caption style white text bottom", "yellow sticky note with handwriting", "highlight marker emphasis on key words", "plain minimal text no design", "chat bubble style typed text"],
-      imperfection: ["slight natural photo tilt", "natural uneven indoor lighting with shadows", "visible realistic background clutter", "slightly warm yellowed phone camera tone", "slightly cool bluish night phone tone", "candid unposed natural angle"],
-      captionAngle: ["Just got this and WOW 🔥", "New favorite piece in my closet", "Fellow veterans — you NEED this", "Look what just arrived!! 📦", "My buddy needs to see this", "Wore this all week no regrets"],
-      ctaTreatment: ["almost invisible small text bottom", "small arrow emoji pointing down", "simple Link below ⬇️", "emoji hand 👉 pointing", "underlined minimal small text corner"]
+      photoStyle: ["mirror selfie proudly showing off product", "casual outdoor candid photo in natural light", "close-up of product being worn", "excited unboxing with shipping packaging visible", "wearing product doing an everyday activity"],
+      textOverlay: ["casual handwritten font at the top", "simple white text at the bottom like a phone caption", "minimal plain text no design", "small text in corner barely noticeable"],
+      imperfection: ["slight natural photo tilt", "natural uneven indoor lighting", "visible realistic background items", "slightly warm yellowed phone camera tone", "candid unposed natural angle"],
+      captionContent: ["Just got this and I love it", "New favorite piece right here", "Fellow veterans you need this", "Look what just arrived today", "Wore this all week no regrets"],
+      ctaStyle: ["almost invisible small text at bottom", "small arrow pointing down", "simple small text in corner"]
     }},
   { id: "sale_promo", label: "Sale / Promotion", icon: "🏷️", desc: "Discount-focused, urgent", purpose: "Retargeting, conversion",
-    core: "Promotional sale advertisement, bold discount/offer as absolute focal point and LARGEST element, product alongside deal, strong urgency and value, commercial and direct, drives immediate action",
-    textRules: `OFFER: LARGEST element — bigger than headline and product. "20% OFF" or "BUY 1 GET 1" must dominate. HEADLINE: Supports offer context. CTA: Urgent — "Shop Now", "Claim Offer". URGENCY: Must include deadline/scarcity. Offer readable from thumbnail — make it HUGE.`,
+    core: "Promotional sale advertisement. The discount offer is the LARGEST and most prominent element in the entire image. Product shown alongside the deal. Strong urgency and value, commercial and direct",
+    textGuidance: `The offer (like "20% OFF" or "BUY 1 GET 1") must be the BIGGEST element — larger than everything else including the product. Add a headline that supports the offer, and an urgent call-to-action. Include a deadline or scarcity message. The offer must be readable even at thumbnail size.`,
     variations: {
-      offerDisplay: ["giant percentage number filling half frame", "old price slashed with bold new price", "BUY 1 GET 1 massive block letters", "dollar amount OFF on ribbon banner", "large circular badge with offer", "starburst explosion shape with deal"],
-      background: ["solid bold red", "solid bold orange", "deep navy premium dark", "product photo with color overlay", "dark bg with bright offer text", "clean white with bold accents"],
-      layout: ["offer large left — product right", "offer massive centered — product below", "product dominant — offer badge corner", "horizontal split offer top product bottom", "diagonal split offer and product"],
-      urgency: ["ENDS MONDAY with clock icon", "LIMITED TIME ONLY warning", "WHILE SUPPLIES LAST", "TODAY ONLY — 24 HOURS", "48 HOURS LEFT countdown", "ONLY A FEW LEFT scarcity"],
-      colorEnergy: ["classic red and white", "black and metallic gold", "navy and bright orange", "olive green and white", "red-white-blue patriotic"]
+      offerDisplay: ["giant percentage number filling half the frame", "old price crossed out with bold new price", "BUY 1 GET 1 in massive block letters", "dollar amount OFF on a ribbon banner", "large circular badge with the deal"],
+      background: ["solid bold red", "solid bold orange", "deep navy premium dark", "clean white with bold color accents"],
+      layout: ["offer large left with product right", "offer massive centered with product below", "product dominant with offer badge in corner"],
+      urgency: ["ENDS MONDAY with a clock", "LIMITED TIME ONLY", "WHILE SUPPLIES LAST", "TODAY ONLY", "48 HOURS LEFT"],
+      colorEnergy: ["classic red and white", "black and metallic gold", "navy and bright orange", "red-white-blue patriotic"]
     }},
   { id: "testimonial_proof", label: "Testimonial / Social Proof", icon: "⭐", desc: "Reviews, trust building", purpose: "Mid-funnel retargeting",
-    core: "Testimonial-based advertisement featuring customer quote/review prominently, product alongside, warm trustworthy atmosphere, authentic social proof, builds confidence",
-    textRules: `QUOTE: Primary element with large quotation marks. 1-2 sentences max. ATTRIBUTION: "— James R., Verified Veteran Buyer" with ★★★★★. PRODUCT: Beside or below quote. CTA: Trust-based — "Join 5,000+ Veterans". Must include star rating or trust badge.`,
+    core: "Testimonial advertisement featuring a customer review quote prominently displayed next to the product. Warm trustworthy atmosphere, authentic social proof feel. The product is shown beautifully on one side, the review text on the other",
+    textGuidance: `Display a customer review quote (1-2 sentences maximum) with large decorative quotation marks. Below the quote add an attribution like a name and "Verified Veteran Buyer" with a five-star rating. On the opposite side show the product beautifully. Add a trust-based call-to-action like "Join 5,000+ Veterans".`,
     variations: {
-      quoteDisplay: ["oversized decorative quotation marks framing text", "italic elegant serif with em dash attribution", "handwritten authentic style quote", "speech bubble graphic containing quote", "key phrase highlighted with color underline", "card panel with rounded corners containing quote"],
-      layout: ["quote left — product right", "quote above — product below", "blurred product background — quote overlay", "full width quote — small product corner", "even split screen halves"],
-      starRating: ["five gold stars ★★★★★ below quote", "star rating above quote", "stars in attribution line", "single large star with 5/5 text", "no stars — text testimonial only"],
-      backgroundMood: ["warm neutral cream beige", "soft out-of-focus lifestyle", "clean white with gold accent", "dark charcoal warm amber lighting", "subtle patriotic faded flag accent"],
-      trustElement: ["Verified Purchase ✓ badge", "★★★★★ 2,000+ Reviews", "Trusted by Veterans Nationwide", "Join 12,000+ Happy Customers", "star rating summary graphic"],
-      quoteAngle: ["Best quality I've ever seen", "Everyone asked where I got it", "My wife loves it more than I do", "Got this for my dad he was speechless", "Haven't taken it off since it arrived", "Every veteran brother needs one"]
+      quoteDisplay: ["oversized decorative quotation marks framing the text", "elegant italic serif with em dash attribution", "card panel with rounded corners containing the quote"],
+      layout: ["quote on left with product on right", "quote above with product below", "blurred product background with quote overlay centered"],
+      starRating: ["five gold stars below the quote", "star rating above the quote", "large star with 5/5 text beside it"],
+      backgroundMood: ["warm neutral cream beige", "clean white with gold accent", "dark charcoal with warm amber lighting"],
+      trustElement: ["Verified Purchase badge", "2,000+ Reviews text", "Trusted by Veterans Nationwide", "Join 12,000+ Happy Customers"],
+      quoteContent: ["Best quality I have ever seen", "Everyone asked where I got it", "Got this for my dad he was speechless", "Have not taken it off since it arrived", "Every veteran brother needs one"]
     }},
-  { id: "collection_bundle", label: "Collection / Bundle", icon: "🛍️", desc: "Multi-product, upsell, AOV", purpose: "Upsell, AOV, FBT",
-    core: "Product collection ad displaying multiple complementary products as curated set, organized attractive arrangement, cohesive visual theme, bundle value clear, editorial shopping feel",
-    textRules: `HEADLINE: Collection/bundle concept — "Complete Your Set", "The Full Kit". PRICING: Can show bundle savings. CTA: "Shop the Set", "Get the Bundle". LAYOUT: Multiple products organized attractively.`,
+  { id: "collection_bundle", label: "Collection / Bundle", icon: "🛍️", desc: "Multi-product, upsell, AOV", purpose: "Upsell, AOV boost",
+    core: "Product collection advertisement displaying the main product as the hero centerpiece with a clean organized layout suggesting it is part of a larger set. The main product from the reference image is shown large and prominent. Text suggests matching items available. Editorial shopping feel",
+    textGuidance: `Add a headline about the collection concept like "Complete Your Set" or "The Full Kit". Show the main product prominently. Add a call-to-action like "Shop the Set". Keep the focus on the single main product but suggest a collection through the headline and composition.`,
     variations: {
-      arrangement: ["clean grid layout equal spacing", "angled overlapping cascade with depth", "overhead flat lay editorial", "side-by-side horizontal lineup", "stacked layered with shadows", "diagonal stagger with energy"],
-      background: ["dark wood warm premium", "clean white and gray minimal", "military olive canvas subtle", "two-tone split dark and light", "gradient dark to light", "dark slate stone texture"],
-      grouping: ["hat + tee + keychain full set", "bomber jacket + hat outerwear duo", "3 different tee designs same branch", "tee + hoodie + hat core trio", "mixed accessories spread"],
-      valueDisplay: ["Save $XX When You Bundle", "slashed total showing bundle price", "3 for $XX deal text", "Complete Set Special Price badge", "no price — Shop the Collection"],
-      branchCue: ["branch color accent throughout", "branch emblem watermark background", "branch name in headline", "color-coded border matching branch", "general veteran no specific branch"]
+      arrangement: ["main product large centered with subtle shadow", "main product angled with editorial lighting", "main product on a clean platform or pedestal"],
+      background: ["dark wood warm premium", "clean white and gray minimal", "military olive canvas subtle", "gradient dark to light"],
+      valueDisplay: ["Save when you bundle text", "Complete Set Special Price badge", "Shop the Collection text"],
+      branchCue: ["branch color accent throughout", "branch name in headline", "general veteran no specific branch"]
     }},
   { id: "seasonal_campaign", label: "Seasonal / Holiday", icon: "🎆", desc: "Memorial Day, Veterans Day, Christmas", purpose: "Time-sensitive holidays",
-    core: "Seasonal holiday campaign ad, festive yet respectful atmosphere, themed decorations and colors woven in, celebratory or honoring mood, seasonal pride and veteran connection",
-    textRules: `HEADLINE: Holiday-specific connecting to veteran pride. SUB: Offer/campaign detail. CTA: Time-bound — "Shop Memorial Day Collection", "Limited Holiday Edition". Holiday atmosphere immediately obvious.`,
+    core: "Seasonal holiday campaign advertisement. Festive yet respectful atmosphere with themed decorations and colors. The product is shown prominently within the holiday context. Celebratory or honoring mood with seasonal veteran connection",
+    textGuidance: `Add a holiday-specific headline connecting to veteran pride. Include a time-bound call-to-action like "Shop Memorial Day Collection" or "Limited Holiday Edition". The holiday atmosphere should be immediately obvious but not overpower the product.`,
     variations: {
-      holiday: ["4th of July with fireworks bunting sparklers celebration", "Memorial Day poppies flags on graves solemn pride", "Vietnam Veterans Day ribbon colors yellow-red tribute", "Veterans Day salute ceremony Thank You For Your Service", "Christmas warm lights wreath fireplace snow Perfect Gift"],
-      setting: ["outdoor festive celebration", "home decorated for holiday", "community gathering event", "intimate family indoor celebration", "formal ceremony or parade"],
-      seasonalPlacement: ["holiday elements framing product all sides", "holiday elements background only", "integrated into text design", "festive border accents edges", "scattered confetti overlay"],
-      urgencyStyle: ["Limited Edition exclusive badge", "Only Until [Date] deadline", "Holiday Special This Week Only", "Seasonal Exclusive While They Last", "Order by [Date] for Holiday Delivery"],
-      moodRange: ["loud celebratory maximum energy", "quiet solemn honoring reverential", "warm family togetherness love", "energetic patriotic excitement", "grateful reflective contemplation"]
+      holiday: ["4th of July with fireworks and bunting celebration", "Memorial Day with flags and solemn pride", "Veterans Day salute ceremony", "Christmas with warm lights and wreath", "Thanksgiving with family and autumn warmth"],
+      setting: ["outdoor festive celebration", "home decorated for the holiday", "intimate family indoor celebration"],
+      seasonalPlacement: ["holiday elements framing the product on all sides", "holiday elements in background only", "festive border accents around edges"],
+      urgencyStyle: ["Limited Edition exclusive badge", "Holiday Special This Week Only", "Order by deadline for Holiday Delivery"],
+      moodRange: ["loud celebratory energy", "quiet solemn honoring", "warm family togetherness", "grateful reflective contemplation"]
     }},
   { id: "storytelling_cinematic", label: "Storytelling / Cinematic", icon: "🎬", desc: "Emotional, brand building", purpose: "Top-of-funnel awareness",
-    core: "Cinematic storytelling ad, emotionally powerful movie-poster quality, extremely minimal text letting image speak, atmospheric and evocative, captures feeling not selling, deeply resonant with veteran identity",
-    textRules: `HEADLINE: Short powerful poetic MAX 5 words. Single word ok. CTA: Very subtle or none — just logo. LAYOUT: Cinematic image 90-95%, text extremely minimal. MOOD: Deep lasting emotion. No headline (logo only) is acceptable for this style.`,
+    core: "Cinematic storytelling advertisement with movie-poster quality. Emotionally powerful, extremely minimal text, atmospheric and evocative. A veteran figure wearing the product in a deeply resonant scene. The image tells a story and captures a feeling, not selling",
+    textGuidance: `Add only a very short powerful phrase of maximum 5 words, or just a small logo in the corner. The image IS the message. Text covers less than 10% of the frame. The mood should be deep and lasting.`,
     variations: {
-      scene: ["veteran silhouette against dramatic sunset", "lone figure walking down endless road to horizon", "veteran standing tall looking at vast landscape", "weathered hands gripping railing overlooking distance", "back turned with flag softly blowing in distance", "sitting contemplative on old weathered porch", "dog tags hanging dramatic lighting close-up", "pair of worn boots on ground flag behind"],
-      lightingMood: ["epic golden hour warm long shadows", "melancholy blue hour cool tones", "dramatic stormy sky with golden breaks", "powerful backlit silhouette bright sky dark figure", "soft ethereal misty morning diffused", "harsh desert sun extreme contrast"],
-      colorGrading: ["warm Kodak film golden highlights", "heavily desaturated moody dramatic", "high contrast black shadows warm gold highlights", "teal shadows orange highlights cinematic", "soft faded nostalgic with grain", "ultra-deep shadows selective warm highlights"],
-      textTreatment: ["very small centered bottom edge", "minimal small top left barely noticeable", "barely visible transparent watermark blending in", "subtly integrated into open sky space", "no text — only small logo corner", "single large word semi-transparent ghost overlay"],
-      emotionAngle: ["deep pride and honor for service", "quiet inner strength resilience", "solemn remembrance of fallen", "eternal brotherhood transcending time", "emotion of coming home", "heavy cost of freedom meaning", "legacy passed to next generation"]
+      scene: ["veteran silhouette against dramatic sunset", "lone figure walking down an endless road to the horizon", "veteran standing tall looking at a vast landscape", "sitting contemplative on an old weathered porch"],
+      lightingMood: ["epic golden hour with warm long shadows", "melancholy blue hour cool tones", "dramatic stormy sky with golden breaks", "powerful backlit silhouette"],
+      colorGrading: ["warm Kodak film golden highlights", "heavily desaturated moody dramatic", "high contrast dark shadows warm gold highlights", "teal shadows orange highlights cinematic"],
+      textTreatment: ["very small centered at the bottom edge", "minimal small top left barely noticeable", "no text at all just a small logo in the corner", "single large word semi-transparent ghost overlay"],
+      emotionAngle: ["deep pride and honor for service", "quiet inner strength and resilience", "solemn remembrance", "eternal brotherhood", "legacy passed to next generation"]
     }},
 ];
 
 function buildBannerPrompt(style, productDesc, sizeInfo, opts = {}) {
   const { headline, cta, offer, branch } = opts;
   const v = style.variations;
-  const parts = [style.core];
-  Object.keys(v).forEach(k => parts.push(pick(v[k])));
-  parts.push(style.textRules);
-  parts.push(`Output: ${sizeInfo.ratio} (${sizeInfo.px})`);
-  parts.push(`Product: ${productDesc}. Product design MUST be preserved EXACTLY.`);
-  if (headline) parts.push(`HEADLINE: "${headline}"`);
-  else parts.push("Generate appropriate headline for US veteran audience matching this style.");
-  parts.push(`CTA: "${cta || "Shop Now"}"`);
-  if (offer) parts.push(`OFFER PROMINENTLY: "${offer}"`);
-  if (branch) parts.push(`Branch: ${branch} — use branch colors and insignia.`);
-  parts.push(`TEXT RULES: 1) All text spelled correctly. 2) All text large enough to read at a glance. 3) Sufficient contrast for legibility. 4) Do NOT overlap product design. 5) Professional typesetting.`);
-  return parts.join("\n\n");
+  const sceneParts = [];
+  Object.keys(v).forEach(k => sceneParts.push(pick(v[k])));
+
+  const textInstructions = [];
+  if (headline) textInstructions.push(`Display this exact headline text on the banner: "${headline}"`);
+  else textInstructions.push("Generate an appropriate short headline for US veteran audience matching this style.");
+  textInstructions.push(`Display this exact call-to-action text: "${cta || "Shop Now"}"`);
+  if (offer) textInstructions.push(`Display this offer prominently: "${offer}"`);
+  if (branch) textInstructions.push(`This is for ${branch} — use appropriate branch colors and insignia in the design.`);
+
+  return [
+    FIDELITY_RULES,
+    "",
+    `SCENE: ${style.core}. ${sceneParts.join(". ")}.`,
+    "",
+    `TEXT ON THE BANNER: ${style.textGuidance}`,
+    "",
+    textInstructions.join("\n"),
+    "",
+    `CRITICAL TEXT RULES: All displayed text must be spelled correctly and large enough to read at a glance. Text must have sufficient contrast against its background. Do NOT overlap text on top of the product design. Use professional clean typesetting.`,
+    "",
+    `OUTPUT: High quality advertisement image. Aspect ratio ${sizeInfo.ratio} (${sizeInfo.px}).`,
+    `PRODUCT: ${productDesc}.`,
+    "",
+    NEGATIVE_RULES,
+    `Additional text prohibition: NEVER display the words "Headline", "CTA", "Text Rules", "Output", "Product", or any formatting instruction. Only display the actual headline, call-to-action, and offer text content.`
+  ].join("\n");
 }
 
 // ════════════════════════════════════════════════════════════
@@ -267,7 +296,7 @@ async function analyzeProduct(geminiKey, b64, mime, userNotes) {
 }
 
 // ════════════════════════════════════════════════════════════
-// API ADAPTERS
+// API ADAPTERS (OpenAI fixed to correct endpoint)
 // ════════════════════════════════════════════════════════════
 
 async function callGemini(key, model, b64, mime, prompt, sig) {
@@ -284,21 +313,37 @@ async function callGemini(key, model, b64, mime, prompt, sig) {
 }
 
 async function callOpenAI(key, model, b64, mime, prompt, sig, apiSize) {
-  const input = [];
-  if (b64) input.push({ type: "input_image", image_url: `data:${mime};base64,${b64}` });
-  input.push({ type: "input_text", text: prompt });
-  const res = await fetch("https://api.openai.com/v1/responses", { method: "POST", signal: sig, headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` }, body: JSON.stringify({ model: "gpt-4.1-mini", input: [{ role: "user", content: input }], tools: [{ type: "image_generation", quality: "low", size: apiSize || "1024x1024" }] }) });
+  const body = { model: model || "dall-e-3", prompt, n: 1, size: apiSize || "1024x1024", response_format: "b64_json" };
+  if (model === "dall-e-3") body.quality = "standard";
+  const res = await fetch("https://api.openai.com/v1/images/generations", { method: "POST", signal: sig, headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` }, body: JSON.stringify(body) });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.error?.message || `OpenAI ${res.status}`); }
   const data = await res.json();
-  const imgOut = (data.output || []).find(o => o.type === "image_generation_call");
-  if (!imgOut?.result) throw new Error("OpenAI no image");
-  return `data:image/png;base64,${imgOut.result}`;
+  const b64Out = data?.data?.[0]?.b64_json;
+  if (!b64Out) throw new Error("OpenAI no image returned");
+  return `data:image/png;base64,${b64Out}`;
 }
 
 async function genImage(plat, key, model, b64, mime, prompt, sig, apiSize) {
   if (plat === "gemini") return callGemini(key, model, b64, mime, prompt, sig);
   if (plat === "openai") return callOpenAI(key, model, b64, mime, prompt, sig, apiSize);
   throw new Error("Unknown platform");
+}
+
+// ════════════════════════════════════════════════════════════
+// RETRY WRAPPER (3 attempts, exponential backoff)
+// ════════════════════════════════════════════════════════════
+
+async function genImageWithRetry(plat, key, model, b64, mime, prompt, sig, apiSize, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await genImage(plat, key, model, b64, mime, prompt, sig, apiSize);
+    } catch (err) {
+      if (err.name === "AbortError") throw err;
+      if (attempt === maxRetries) throw err;
+      const delayMs = Math.min(1000 * Math.pow(2, attempt), 8000) + Math.random() * 1000;
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
 }
 
 // ════════════════════════════════════════════════════════════
@@ -375,7 +420,7 @@ export default function App() {
   const [bannerBranch, setBannerBranch] = useState("");
   const [showPrompt, setShowPrompt] = useState(false);
   const [previewStyleId, setPreviewStyleId] = useState(null);
-  const [promptOverrides, setPromptOverrides] = useState({}); // { styleId: "edited prompt" }
+  const [promptOverrides, setPromptOverrides] = useState({});
   const [analyzing, setAnalyzing] = useState(false);
   const [analyzeResult, setAnalyzeResult] = useState(null);
   const [genCount, setGenCount] = useState(1);
@@ -440,7 +485,7 @@ export default function App() {
     setAnalyzing(false);
   };
 
-  // ── PARALLEL GENERATE ──
+  // ── PARALLEL GENERATE (with retry) ──
   const startGen = async () => {
     if (!key) return log("Chưa nhập API Key!", "error");
     if (!imgs.length) return log("Chưa upload ảnh!", "error");
@@ -464,13 +509,12 @@ export default function App() {
 
     const tasks = q.map((item, idx) => async () => {
       if (ctrl.signal.aborted) throw new Error("Aborted");
-      // Delay between tasks (except first batch)
       if (idx >= concurrency) await new Promise(r => setTimeout(r, delay * 1000));
       const styleObj = allStyles.find(s => s.id === item.styleId);
       const prompt = promptOverrides[item.styleId] || (bannerMode
         ? buildBannerPrompt(styleObj, productDesc || "veteran-themed product", sizeInfo, { headline: bannerHeadline, cta: bannerCta, offer: bannerOffer, branch: bannerBranch })
         : buildMockupPrompt(styleObj, productDesc || "veteran-themed product", sizeInfo));
-      return await genImage(plat, key, model, item.img.b64, item.img.mime, prompt, ctrl.signal, apiSize);
+      return await genImageWithRetry(plat, key, model, item.img.b64, item.img.mime, prompt, ctrl.signal, apiSize);
     });
 
     let okCount = 0;
@@ -516,7 +560,7 @@ export default function App() {
       <header style={{ padding: "18px 24px 0", borderBottom: "1px solid rgba(255,255,255,.05)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 12 }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: 21, fontWeight: 700, color: "#f1f5f9", display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 26 }}>🎖️</span> Vettailor Generator v3</h1>
+            <h1 style={{ margin: 0, fontSize: 21, fontWeight: 700, color: "#f1f5f9", display: "flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: 26 }}>🎖️</span> Vettailor Generator v4</h1>
             <p style={{ margin: "3px 0 0", fontSize: 12, color: "#64748b" }}><span style={{ color: pf.color }}>{pf.icon} {pf.label}</span> · {sizeInfo.px} · {bannerMode ? "🎯 Banner" : "🎨 Mockup"} · ×{concurrency} parallel</p>
           </div>
           {running && <div style={{ textAlign: "right" }}><div style={{ fontSize: 12, color: "#a78bfa", fontWeight: 600, marginBottom: 3 }}>{prog.c}/{prog.t}</div><div className="pbar" style={{ width: 110 }}><div className="pfill" style={{ width: `${prog.t ? (prog.c / prog.t) * 100 : 0}%` }} /></div></div>}
